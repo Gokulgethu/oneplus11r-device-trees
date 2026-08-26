@@ -213,3 +213,8 @@ vendor.usb.use_gadget_hal=0
 
 # Zygote
 zygote.critical_window.minute=10
+
+# NFC
+ro.vendor.nfc.repair=1
+persist.vendor.nfc.config_file_name=libnfc-nxp.conf
+ro.vendor.nfc.feature.chipname=SN100
