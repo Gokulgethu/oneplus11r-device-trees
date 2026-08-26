@@ -410,4 +410,18 @@
         <item>0,1</item>
     </string-array>
 
+
+    <!-- Fast charge thresholds (uA) -->
+    <integer name="config_chargingFastThreshold_uA">2500000</integer>
+    <integer name="config_chargingSlowThreshold_uA">1000000</integer>
+
+    <!-- Camera Auxiliary lens package access list -->
+    <string-array name="config_cameraAuxPackageList">
+        <item>org.lineageos.aperture</item>
+        <item>com.android.camera</item>
+        <item>com.google.android.GoogleCamera</item>
+        <item>com.oplus.camera</item>
+        <item>org.codeaurora.snapcam</item>
+    </string-array>
+
 </resources>

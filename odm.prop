@@ -32,3 +32,9 @@ ro.vendor.oplus.radio.sar_regionmark=FCC
 
 # SVN
 ro.build.version.svn=21
+
+# Battery & 100W SuperVOOC
+ro.vendor.oplus.battery.design_capacity=5000
+ro.vendor.oplus.battery.cell_count=2
+ro.vendor.oplus.fastcharge.watt=100
+ro.vendor.oplus.vooc.protocol=5

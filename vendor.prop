@@ -85,7 +85,32 @@ ro.bluetooth.a2dp_offload.supported=true
 # Camera
 vendor.camera.algo.jpeghwencode=0
 vendor.camera.aux.packageexcludelist=org.telegram.messenger,org.thunderdog.challegram
-vendor.camera.aux.packagelist=com.oplus.camera
+vendor.camera.aux.packagelist=com.oplus.camera,org.lineageos.aperture,com.google.android.GoogleCamera,com.android.camera,org.codeaurora.snapcam
+persist.vendor.camera.privapp.list=com.oplus.camera,org.lineageos.aperture,com.google.android.GoogleCamera
+persist.vendor.camera.expose.aux=1
+persist.vendor.camera.60fps.supported=1
+persist.vendor.camera.4k60.fps=1
+persist.vendor.camera.eis.enable=1
+persist.vendor.camera.ois.enable=1
+persist.vendor.camera.mkn.enable=1
+vendor.camera.sensor.hdr.mode=1
+
+# 100W SuperVOOC & Battery
+persist.vendor.oplus.charge.vooc_type=5
+ro.vendor.oplus.vooc.support=1
+ro.vendor.oplus.supervooc.support=1
+ro.vendor.oplus.supervooc2.support=1
+ro.vendor.oplus.supervooc.wattage=100
+ro.vendor.oplus.fastchg.support=1
+ro.vendor.oplus.smart_charge.support=1
+ro.vendor.oplus.extreme_cold_charge.support=1
+ro.vendor.oplus.bcl.support=1
+persist.vendor.oplus.bcl.enable=1
+persist.vendor.oplus.battery.aging.support=1
+persist.vendor.oplus.dual_cell.support=1
+vendor.oplus.charger.wireless_support=0
+ro.vendor.oplus.charging.current.limit=11000
+ro.vendor.oplus.charging.voltage.limit=11000
 
 # Chipset
 ro.soc.manufacturer=Qualcomm
