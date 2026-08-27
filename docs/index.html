@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual OnePlus 11R · RisingOS 9 Alpha</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="14" r="6" fill="%23ff8a5c"/><path d="M2 20h20" stroke="%23ff6a88" stroke-width="2.5" stroke-linecap="round"/></svg>'>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="desk">
+  <!-- ======== side panel ======== -->
+  <div class="panel">
+    <div class="brand">
+      <svg class="sun" viewBox="0 0 48 48"><defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb35c"/><stop offset=".6" stop-color="#ff6a88"/><stop offset="1" stop-color="#c99bf1"/></linearGradient></defs><circle cx="24" cy="28" r="11" fill="url(#sg)"/><path d="M6 40h36M24 12v-6M10 20l-4-4M38 20l4-4" stroke="url(#sg)" stroke-width="3.4" stroke-linecap="round"/></svg>
+      <h1>Virtual 11R<small>RisingOS 9 · interactive simulator</small></h1>
+    </div>
+
+    <div class="chips">
+      <span class="chip hot">RisingOS 9-Alpha</span>
+      <span class="chip">Android 16</span>
+      <span class="chip">GAPPS</span>
+      <span class="chip">COMMUNITY</span>
+      <span class="chip">udon · CPH2487</span>
+    </div>
+
+    <div class="blurb">
+      An interactive re-creation of your build <b>RisingOS-9-Alpha-260826-2207-GAPPS-COMMUNITY-udon</b>
+      running on the <b>OnePlus 11R 5G</b>. Everything on the phone is clickable —
+      boot, unlock, quick settings, RisingOS customisations, hardware buttons and more.
+    </div>
+
+    <div class="specs">
+      <div><span>Model</span><span>OnePlus 11R 5G · CPH2487</span></div>
+      <div><span>SoC</span><span>Snapdragon 8+ Gen 1 (SM8475)</span></div>
+      <div><span>Display</span><span>6.74" 1240×2772 AMOLED · 120Hz</span></div>
+      <div><span>Android</span><span>16 (Baklava)</span></div>
+      <div><span>Firmware base</span><span>OxygenOS 16.0.5.1002(EX01)</span></div>
+      <div><span>Features</span><span>FOD · Alert slider · Dolby Atmos · OPlus Cam</span></div>
+      <div><span>Maintainer</span><span>Gokulgethu</span></div>
+    </div>
+
+    <div class="hints">
+      <b>Try this:</b><br>
+      🔒 &nbsp;Hold the <b>fingerprint</b> (or swipe up) to unlock<br>
+      🌞 &nbsp;Pull down from the <b>top of the screen</b> for Quick Settings<br>
+      🎚️ &nbsp;Click the <b>alert slider</b> (top-left edge) to cycle ring modes<br>
+      ⏻ &nbsp;<b>Long-press the power key</b> for the power menu<br>
+      ⬆️ &nbsp;Drag up from the <b>bottom bar</b> for the app drawer / to go home<br>
+      🎨 &nbsp;Open <b>Customisations</b> — every option actually works<br>
+      🥞 &nbsp;In <i>Settings → About phone</i>, tap <b>Android version</b> ×7
+    </div>
+
+    <div class="btnrow">
+      <button class="tourbtn" id="tourBtn">✨ Take the feature tour</button>
+    </div>
+
+    <div class="disc">
+      <b>Note:</b> this is a faithful <b>UI simulation</b> of the ROM, rebuilt from your device tree
+      (<code style="background:#242030;border-radius:5px;padding:0 5px">rising_udon.mk</code>) and build metadata —
+      not the OS image itself running. Device-specific ARM builds require real 11R hardware.
+    </div>
+  </div>
+
+  <!-- ======== stage ======== -->
+  <div class="stage">
+    <div class="scaler" id="scaler">
+      <div class="phone" id="phone">
+        <div class="antenna"></div>
+
+        <!-- hardware keys -->
+        <div class="slider m-ring" id="slider" title="Alert slider"><div class="knob"></div></div>
+        <button class="hwbtn vol vup" id="volUp" title="Volume up"></button>
+        <button class="hwbtn vol vdn" id="volDn" title="Volume down"></button>
+        <button class="hwbtn pwbtn" id="powerBtn" title="Power"></button>
+
+        <div class="screen" id="screen" data-theme="dark">
+          <div class="wallpaper"></div>
+
+          <!-- home -->
+          <div class="layer home" id="home">
+            <div class="glance">
+              <div>
+                <div class="gd" id="glanceDate">Thu, Aug 27</div>
+                <div class="gw">☀️ 33° Kallakurichi</div>
+              </div>
+            </div>
+            <div class="grid" id="homeGrid"></div>
+            <div class="hgrow"></div>
+            <div class="searchpill" id="searchPill">
+              <span class="g">G</span> Search your phone and more
+              <span class="mic" id="pillIcons"></span>
+            </div>
+            <div class="dock" id="dock"></div>
+          </div>
+
+          <!-- drawer -->
+          <div class="drawer" id="drawer">
+            <div class="dsear">🔍 &nbsp;Search apps</div>
+            <div class="dgrid" id="drawerGrid"></div>
+          </div>
+
+          <!-- app window -->
+          <div class="layer appwin" id="appwin">
+            <div class="apphead">
+              <button class="back" id="appBack">←</button>
+              <span id="appTitle">App</span>
+            </div>
+            <div class="appbody" id="appbody"></div>
+          </div>
+
+          <!-- options sheet -->
+          <div class="sheetscrim" id="sheetscrim"></div>
+          <div class="sheet" id="sheet"><h4 id="sheetTitle"></h4><div id="sheetOpts"></div></div>
+
+          <!-- lock -->
+          <div class="layer lock" id="lock">
+            <svg class="lockpad" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="10" width="14" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></svg>
+            <div class="lc" id="lockClock">
+              <div class="lc-t" id="lcTime">2:32</div>
+              <div class="lc-d" id="lcDate">Thu, Aug 27</div>
+            </div>
+            <div class="lockwx">☀️ 33° · Kallakurichi</div>
+            <div class="notifs" id="lockNotifs"></div>
+            <div class="fod" id="fod"></div>
+            <div class="lockchip l" id="lockTorch"></div>
+            <div class="lockchip r" id="lockCam"></div>
+            <div class="lockhint">Swipe up or hold fingerprint to unlock</div>
+          </div>
+
+          <!-- quick settings -->
+          <div class="qsscrim" id="qsscrim"></div>
+          <div class="qs" id="qs">
+            <div class="qshead">
+              <div><div class="qt" id="qsTime">2:32</div><div class="qd" id="qsDate">Thu, Aug 27</div></div>
+              <div class="qsicrow" id="qsIcons"></div>
+            </div>
+            <div class="media-card-wrap"><div class="mediac">
+              <div class="art"></div>
+              <div class="mt"><b>Sunrise Lofi — Rise Up Mix</b><span>Rising Tunes</span></div>
+              <button id="mediaPlay"></button>
+            </div></div>
+            <div class="tiles" id="tiles"></div>
+            <div class="brightrow">
+              <span id="bsun"></span>
+              <input type="range" id="bright" min="15" max="100" value="78">
+            </div>
+          </div>
+
+          <!-- power menu -->
+          <div class="pmscrim" id="pmscrim"></div>
+          <div class="pm" id="pm"></div>
+
+          <!-- volume -->
+          <div class="volpanel" id="volpanel" style="opacity:0;pointer-events:none">
+            <span id="volIco"></span>
+            <div class="vtrack"><i id="vfill" style="height:55%"></i></div>
+            <b id="vnum" style="font-size:11px">55</b>
+          </div>
+
+          <!-- boot / off / easter egg / overlays -->
+          <div class="layer boot" id="boot">
+            <svg class="sunanim" viewBox="0 0 100 100">
+              <defs><linearGradient id="bsg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb35c"/><stop offset=".6" stop-color="#ff6a88"/><stop offset="1" stop-color="#c99bf1"/></linearGradient></defs>
+              <g class="rays" stroke="url(#bsg)" stroke-width="3" stroke-linecap="round">
+                <path d="M50 8v8M78 18l-6 6M92 50h-8M78 82l-6-6M22 18l6 6M8 50h8M22 82l6-6"/>
+              </g>
+              <circle class="sunrise" cx="50" cy="56" r="21" fill="url(#bsg)"/>
+              <path d="M14 84h72" stroke="url(#bsg)" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+            <div class="word">RisingOS</div>
+            <div class="legal">Powered by Android</div>
+          </div>
+
+          <div class="layer off hidden" id="off">
+            <div class="at" id="aodTime">2:32</div>
+            <div class="ad" id="aodDate">Thu, Aug 27</div>
+            <div class="hint">Press the power key to wake</div>
+          </div>
+
+          <div class="layer egg hidden" id="egg">
+            <div class="sun"></div>
+            <h2>Baklava</h2>
+            <p>Android 16 · RisingOS 9-Alpha<br>Built with ❤️ by Gokulgethu for udon</p>
+          </div>
+
+          <div class="flash" id="flash"></div>
+          <div class="toast" id="toast"></div>
+
+          <!-- status bar + gesture -->
+          <div class="statusbar" id="statusbar">
+            <span id="sbTime">2:32</span>
+            <span class="sb-right" id="sbRight"></span>
+          </div>
+          <div class="ghit" id="ghit"></div>
+          <div class="gesture"><i></i></div>
+          <div class="punch"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- feature tour -->
+<div class="tourscrim hidden" id="tour">
+  <div class="tourcard">
+    <h3 id="tTitle"></h3>
+    <p id="tText"></p>
+    <div class="nav">
+      <button class="tclose" id="tClose">Close</button>
+      <div class="tdots" id="tDots"></div>
+      <button class="tnext" id="tNext">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
