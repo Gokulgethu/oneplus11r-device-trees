@@ -564,7 +564,10 @@ function qsHeader(){
 }
 
 /* ------------------------------------------------ theme/accent/brightness --- */
-function setTheme(t){ S.theme=t==='Light'?'Light':'dark'; $('#screen').dataset.theme=S.theme; save(); renderTiles(); sb(); }
+function setTheme(t){
+  S.theme=t==='Light'?'Light':'dark'; $('#screen').dataset.theme=S.theme; save(); renderTiles(); sb();
+  const tb=$('#tbTheme'); if(tb) tb.textContent = S.theme==='dark' ? '🌙 Theme' : '☀️ Theme';
+}
 function setAccent(c){ S.accent=c; document.documentElement.style.setProperty('--accent',c); save(); }
 function setBright(v){ S.bright=v; $('#screen').style.setProperty('--bright',(0.55+v/100*0.45).toFixed(2)); $('#bright').value=v; const b2=$('#bright2'); if(b2){b2.value=v;b2.style.setProperty('--v',v+'%');} $('#bright').style.setProperty('--v',v+'%'); save(); }
 
@@ -699,6 +702,17 @@ drag($('#drawer'),dy=>{ if(dy!==null&&dy>40) closeDrawer(); });
 
 /* ------------------------------------------------ media + brightness widget --- */
 $('#mediaPlay').onclick=function(){ S.playing=!S.playing; this.innerHTML=S.playing?I.pause:I.play; save(); };
+
+/* ------------------------------------------------ toolbar (AI-Studio style) --- */
+$('#tbInfo').onclick=()=>$('#specPanel').classList.toggle('open');
+$('#panelClose').onclick=()=>$('#specPanel').classList.remove('open');
+$('#tbTour').onclick=()=>{ tStep=0; renderTour(); $('#tour').classList.remove('hidden'); };
+$('#tbTheme').onclick=()=>setTheme(S.theme==='dark'?'Light':'dark');
+$('#tbReboot').onclick=()=>{ if(powered){ toast('Restarting…'); setTimeout(rebootSim,400);} else { $('#off').classList.add('hidden'); showBoot(()=>{powered=true;lockScreen();}); } };
+$('#tbPower').onclick=()=>{
+  if(powered) openPM();
+  else { $('#off').classList.add('hidden'); showBoot(()=>{powered=true;lockScreen();}); }
+};
 
 /* ------------------------------------------------ tour --- */
 const TOUR=[

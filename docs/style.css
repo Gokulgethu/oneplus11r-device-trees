@@ -27,12 +27,31 @@ body{
   color:#e8e6ec;overflow:hidden;user-select:none;
 }
 
-/* ---------- desk layout ---------- */
-.desk{display:flex;height:100vh;width:100vw}
-.panel{
-  width:390px;min-width:340px;padding:34px 34px 22px 44px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;
-  scrollbar-width:thin;
+/* ---------- desk layout (AI-Studio style: slim toolbar + centered device) ---------- */
+.desk{display:flex;flex-direction:column;height:100vh;width:100vw}
+.workwrap{flex:1;display:flex;min-height:0;position:relative}
+.topbar{
+  flex:none;height:54px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:0 18px;border-bottom:1px solid #262130;background:#17142099;backdrop-filter:blur(10px);z-index:120;
 }
+.tb-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;min-width:0;white-space:nowrap;overflow:hidden;flex-direction:row}
+.tb-brand .sun{width:26px;height:26px;flex:none}
+.tb-brand .tb-sub{font-size:10.5px;font-weight:500;color:#8f8b9b;display:block}
+.tb-actions{display:flex;align-items:center;gap:7px}
+.tb-actions button{
+  border:1px solid #35303f;background:#231f2c;color:#cfcbd8;border-radius:9px;
+  padding:7px 12px;font-size:12px;font-weight:600;transition:.15s;white-space:nowrap;
+}
+.tb-actions button:hover{background:#2d2837;border-color:#453e52}
+.tb-actions button.hot{background:linear-gradient(90deg,#ff8a5c,#ff6a88);color:#241206;border:none}
+.panel{
+  position:fixed;top:54px;right:0;bottom:0;width:min(390px,94vw);z-index:150;
+  padding:26px 22px 20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;
+  background:#14111bf4;backdrop-filter:blur(14px);border-left:1px solid #2c2836;
+  transform:translateX(105%);transition:transform .3s cubic-bezier(.5,0,.2,1);box-shadow:-20px 0 60px -20px #000c;
+}
+.panel.open{transform:none}
+.panelclose{position:absolute;top:12px;right:14px;width:32px;height:32px;border-radius:50%;border:1px solid #35303f;background:#231f2c;color:#cfcbd8;font-size:14px;display:flex;align-items:center;justify-content:center}
 .brand{display:flex;align-items:center;gap:12px}
 .brand .sun{width:42px;height:42px}
 .brand h1{font-size:26px;font-weight:700;letter-spacing:.2px;background:linear-gradient(90deg,#ffb35c,#ff6a88 55%,#c99bf1);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -61,7 +80,7 @@ button{font-family:inherit;cursor:pointer}
 .disc b{color:#9894a5}
 
 /* ---------- stage / phone hardware ---------- */
-.stage{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-width:0;padding:8px}
 .scaler{transform-origin:center center}
 .phone{
   position:relative;width:var(--pw);height:var(--ph);
@@ -409,7 +428,9 @@ input[type=range]::-moz-range-thumb{width:4px;height:22px;border:none;border-rad
 
 @media (max-width:900px){
   .desk{flex-direction:column;overflow-y:auto}
-  .panel{width:100%;min-width:0;padding:22px 20px 4px}
-  .stage{padding:12px 0 30px}
   body{overflow:auto}
+  .workwrap{min-height:unset}
+  .tb-brand .tb-sub{display:none}
+  .tb-actions button{padding:7px 9px;font-size:11px}
+  .stage{padding:12px 0 30px}
 }

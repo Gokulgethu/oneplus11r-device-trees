@@ -9,8 +9,25 @@
 </head>
 <body>
 <div class="desk">
-  <!-- ======== side panel ======== -->
-  <div class="panel">
+  <!-- ======== top toolbar (AI-Studio style) ======== -->
+  <div class="topbar">
+    <div class="tb-brand">
+      <svg class="sun" viewBox="0 0 48 48"><defs><linearGradient id="sg2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb35c"/><stop offset=".6" stop-color="#ff6a88"/><stop offset="1" stop-color="#c99bf1"/></linearGradient></defs><circle cx="24" cy="28" r="11" fill="url(#sg2)"/><path d="M6 40h36M24 12v-6M10 20l-4-4M38 20l4-4" stroke="url(#sg2)" stroke-width="3.4" stroke-linecap="round"/></svg>
+      <div>Virtual OnePlus 11R<span class="tb-sub">RisingOS 9-Alpha · Android 16 · udon (CPH2487)</span></div>
+    </div>
+    <div class="tb-actions">
+      <button id="tbInfo" title="Specs &amp; help">ℹ️ Specs</button>
+      <button id="tbTour" title="Feature tour">✨ Tour</button>
+      <button id="tbTheme" title="Toggle theme">🌙 Theme</button>
+      <button id="tbReboot" title="Reboot device">⟳ Reboot</button>
+      <button id="tbPower" title="Power menu" class="hot">⏻</button>
+    </div>
+  </div>
+
+  <div class="workwrap">
+  <!-- ======== side panel (collapsed drawer) ======== -->
+  <div class="panel" id="specPanel">
+    <button class="panelclose" id="panelClose">✕</button>
     <div class="brand">
       <svg class="sun" viewBox="0 0 48 48"><defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb35c"/><stop offset=".6" stop-color="#ff6a88"/><stop offset="1" stop-color="#c99bf1"/></linearGradient></defs><circle cx="24" cy="28" r="11" fill="url(#sg)"/><path d="M6 40h36M24 12v-6M10 20l-4-4M38 20l4-4" stroke="url(#sg)" stroke-width="3.4" stroke-linecap="round"/></svg>
       <h1>Virtual 11R<small>RisingOS 9 · interactive simulator</small></h1>
@@ -199,6 +216,7 @@
       </div>
     </div>
   </div>
+  </div><!-- /workwrap -->
 </div>
 
 <!-- feature tour -->
