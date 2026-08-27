@@ -1,0 +1,279 @@
+name: Build OnePlus 11R Kernel (Device Trees)
+
+on:
+  workflow_dispatch:
+    inputs:
+      kernel_version_tag:
+        description: 'Kernel Version Tag'
+        required: true
+        default: 'v1.0-Trees'
+      add_kernelsu:
+        description: 'Integrate KernelSU'
+        required: true
+        default: 'yes'
+        type: choice
+        options: ['yes', 'no']
+      kernelsu_variant:
+        description: 'KernelSU Variant'
+        required: true
+        default: 'official'
+        type: choice
+        options: ['official', 'next']
+      kernelsu_tag:
+        description: 'KernelSU Release Tag'
+        required: true
+        default: 'v3.2.5'
+      build_modules:
+        description: 'Compile Out-of-tree Qualcomm Driver Modules'
+        required: true
+        default: 'yes'
+        type: choice
+        options: ['yes', 'no']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: oneplus11r-kernel-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build OnePlus 11R SM8475 Kernel
+    runs-on: ubuntu-22.04
+    timeout-minutes: 300
+    env:
+      KSU_SUFFIX: ${{ inputs.add_kernelsu == 'yes' && '-KSU' || '' }}
+    steps:
+      - name: Checkout Device Tree Source
+        uses: actions/checkout@v4
+        with:
+          path: device_tree
+
+      - name: Environment Diagnostics
+        run: |
+          echo "=== CPU Specs ==="
+          lscpu | grep "Model name\|CPU(s):"
+          echo "=== Memory Specs ==="
+          free -h
+          echo "=== Disk Space ==="
+          df -h /
+
+      - name: Install Build Toolchains & Dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bc bison flex cpio libncurses5-dev libncurses-dev \
+            libssl-dev lz4 zstd libelf-dev zip unzip python3 python-is-python3 rsync curl wget
+
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/boost 2>/dev/null || true
+          df -h /
+
+      - name: Checkout OnePlus 11R (SM8475/SM8450) Kernel Source
+        run: |
+          git clone --depth=1 -b lineage-23.2 https://github.com/rocko5498/android_kernel_oneplus_sm8450 kernel
+          cd kernel
+          echo "Kernel SHA: $(git log --oneline -1)"
+
+      - name: Integrate KernelSU (${{ inputs.kernelsu_variant }} - ${{ inputs.kernelsu_tag }})
+        if: inputs.add_kernelsu == 'yes'
+        run: |
+          cd kernel
+          if [ "${{ inputs.kernelsu_variant }}" = "next" ]; then
+            echo "=== Integrating KernelSU-Next ==="
+            curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+          else
+            echo "=== Integrating Official KernelSU ==="
+            curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s -- ${{ inputs.kernelsu_tag }}
+          fi
+          grep -n "kernelsu" drivers/Makefile drivers/Kconfig || true
+
+      - name: Checkout Qualcomm External Driver Modules
+        run: |
+          git clone --depth=1 -b lineage-23.2 https://github.com/pjgowtham/android_kernel_oneplus_sm8450-modules modules
+          cd modules
+          echo "Modules SHA: $(git log --oneline -1)"
+
+      - name: Fetch AOSP Clang Toolchain (clang-r536225)
+        run: |
+          wget -q --progress=dot:giga \
+            "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz" \
+            -O /tmp/clang.tar.gz
+          mkdir -p "$HOME/clang"
+          tar -xzf /tmp/clang.tar.gz -C "$HOME/clang"
+          echo "$HOME/clang/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/clang/bin:$PATH"
+          clang --version | head -2
+
+      - name: Configure Kernel using Device Tree Definitions
+        run: |
+          cd kernel
+          make O=out ARCH=arm64 LLVM=1 gki_defconfig
+          FRAGS="arch/arm64/configs/vendor/waipio_GKI.config \
+                 arch/arm64/configs/vendor/oplus_GKI.config \
+                 arch/arm64/configs/vendor/debugfs.config"
+          
+          # Custom Device Tree Configuration Fragment
+          cat << 'EOF' > devtree.config
+          CONFIG_LOCALVERSION="-Yazhu-Kernel-OnePlus11R-Trees"
+          CONFIG_KPROBES=y
+          CONFIG_HAVE_KPROBES=y
+          CONFIG_KPROBE_EVENTS=y
+          CONFIG_OVERLAY_FS=y
+          EOF
+          
+          if [ "${{ inputs.add_kernelsu }}" = "yes" ]; then
+            echo "CONFIG_KSU=y" >> devtree.config
+          fi
+          
+          FRAGS="$FRAGS devtree.config"
+          ./scripts/kconfig/merge_config.sh -m -O out out/.config $FRAGS
+          make O=out ARCH=arm64 LLVM=1 olddefconfig
+          
+          echo "=== Key Config Values ==="
+          grep -E "^CONFIG_(MODULES|MODVERSIONS|LOCALVERSION|LTO|DEFAULT_INIT|MODULE_SIG|KPROBES|KALLSYMS|OVERLAY_FS|KSU)" out/.config || true
+
+      - name: Compile Kernel Image (ARM64)
+        run: |
+          cd kernel
+          make -j"$(nproc)" O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 Image
+          ls -lh out/arch/arm64/boot/Image
+          cp out/.config ../kernel.config
+
+      - name: Compile Device Tree Vendor Modules
+        if: inputs.build_modules == 'yes'
+        run: |
+          cd kernel
+          mkdir -p ../module-out
+          mods=(
+            "qcom/opensource/mmrm-driver"
+            "qcom/opensource/audio-kernel"
+            "qcom/opensource/camera-kernel"
+            "qcom/opensource/dataipa/drivers/platform/msm"
+            "qcom/opensource/datarmnet/core"
+            "qcom/opensource/datarmnet-ext/aps"
+            "qcom/opensource/datarmnet-ext/offload"
+            "qcom/opensource/datarmnet-ext/shs"
+            "qcom/opensource/datarmnet-ext/perf"
+            "qcom/opensource/datarmnet-ext/perf_tether"
+            "qcom/opensource/datarmnet-ext/sch"
+            "qcom/opensource/datarmnet-ext/wlan"
+            "qcom/opensource/display-drivers/msm"
+            "qcom/opensource/eva-kernel"
+            "qcom/opensource/video-driver"
+            "qcom/opensource/wlan/qcacld-3.0/.qca6490"
+          )
+          for m in "${mods[@]}"; do
+            name=$(echo "$m" | tr '/' '_')
+            make -j"$(nproc)" O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
+                 M="$PWD/../modules/$m" modules > "../module-out/$name.log" 2>&1 || true
+          done
+          find "$PWD/../modules" -name '*.ko' -newer "$PWD/Makefile" -exec cp {} ../module-out/ \; 2>/dev/null || true
+          echo "Total .ko collected: $(ls ../module-out/*.ko 2>/dev/null | wc -l)"
+
+      - name: Download KernelSU Manager APK
+        if: inputs.add_kernelsu == 'yes'
+        run: |
+          if [ "${{ inputs.kernelsu_variant }}" = "next" ]; then
+            APK_URL=$(curl -sfL https://api.github.com/repos/rifsxd/KernelSU-Next/releases/latest | python3 -c "import json,sys; r=json.load(sys.stdin); print(next(a['browser_download_url'] for a in r['assets'] if a['name'].endswith('.apk')))")
+          else
+            APK_URL=$(curl -sfL https://api.github.com/repos/tiann/KernelSU/releases/tags/${{ inputs.kernelsu_tag }} | python3 -c "import json,sys; r=json.load(sys.stdin); print(next(a['browser_download_url'] for a in r['assets'] if a['name'].endswith('.apk')))") || \
+            APK_URL="https://github.com/tiann/KernelSU/releases/download/v3.2.5/KernelSU_v3.2.5_12239-release.apk"
+          fi
+          echo "Downloading Manager: $APK_URL"
+          wget -q "$APK_URL" -O KernelSU-Manager.apk || true
+          ls -lh KernelSU-Manager.apk || true
+
+      - name: Package Flashable AnyKernel3 Zip
+        run: |
+          git clone --depth=1 https://github.com/osm0sis/AnyKernel3 anykernel
+          rm -rf anykernel/.git anykernel/.github anykernel/ramdisk/* 2>/dev/null || true
+          cp kernel/out/arch/arm64/boot/Image anykernel/Image
+          
+          cat > anykernel/anykernel.sh << 'AKEOF'
+          ### AnyKernel3 Ramdisk Mod Script
+          ## OnePlus 11R 5G (aston / udon / CPH2487) - Device Tree Build
+
+          ### AnyKernel setup
+          properties() { '
+          kernel.string=Yazhu Kernel for OnePlus 11R (udon / aston)
+          do.devicecheck=1
+          do.modules=0
+          do.systemless=1
+          do.cleanup=1
+          do.cleanuponabort=0
+          device.name1=udon
+          device.name2=aston
+          device.name3=CPH2487
+          device.name4=OnePlus11R
+          device.name5=OP5961L1
+          supported.versions=
+          supported.patchlevels=
+          supported.vendorpatchlevels=
+          '; } # end properties
+
+          boot_attributes() {
+          set_perm_recursive 0 0 755 644 $RAMDISK/*;
+          }
+
+          BLOCK=auto;
+          IS_SLOT_DEVICE=auto;
+          RAMDISK_COMPRESSION=auto;
+          PATCH_VBMETA_FLAG=auto;
+
+          . tools/ak3-core.sh;
+
+          split_boot;
+          write_boot;
+          AKEOF
+
+          sed -i "s/^kernel.string=.*/kernel.string=Yazhu Kernel${KSU_SUFFIX} for OnePlus 11R (Device Tree Build)/" anykernel/anykernel.sh
+          cd anykernel
+          zip -r9 "../Yazhu-Kernel-OnePlus11R-Trees${KSU_SUFFIX}-AnyKernel3.zip" .
+          cd ..
+          ls -lh "Yazhu-Kernel-OnePlus11R-Trees${KSU_SUFFIX}-AnyKernel3.zip"
+
+      - name: Upload Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Yazhu-Kernel-OnePlus11R-Trees${{ env.KSU_SUFFIX }}-${{ github.run_number }}
+          path: |
+            Yazhu-Kernel-OnePlus11R-Trees*-AnyKernel3.zip
+            kernel/out/arch/arm64/boot/Image
+            kernel.config
+            KernelSU-Manager.apk
+            module-out/*.ko
+          if-no-files-found: warn
+
+      - name: Publish GitHub Release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: kernel-trees-${{ inputs.kernel_version_tag }}${{ env.KSU_SUFFIX }}-${{ github.run_number }}
+          name: Yazhu Kernel for OnePlus 11R from Device Trees (${{ inputs.kernel_version_tag }}${{ env.KSU_SUFFIX }})
+          body: |
+            ## ⚡ Yazhu Kernel for OnePlus 11R 5G (`udon` / `aston` / `CPH2487`)
+            Built directly using **`Gokulgethu/oneplus11r-device-trees`**.
+
+            ### 📱 Specifications:
+            - **Device**: OnePlus 11R 5G (`aston` / `udon` / `CPH2487` / `OP5961L1`)
+            - **SoC**: Qualcomm Snapdragon 8+ Gen 1 (`SM8475` / `waipio`)
+            - **Architecture**: ARM64 (`aarch64`)
+            - **Kernel Version**: Linux 5.10.x GKI
+            - **Toolchain**: AOSP Clang-r536225
+            - **Root Engine**: ${{ inputs.add_kernelsu == 'yes' && format('KernelSU ({0})', inputs.kernelsu_tag) || 'Disabled' }}
+
+            ### 📦 Flashing:
+            Flash in OrangeFox Recovery / TWRP:
+            ```bash
+            adb sideload Yazhu-Kernel-OnePlus11R-Trees${{ env.KSU_SUFFIX }}-AnyKernel3.zip
+            ```
+          files: |
+            Yazhu-Kernel-OnePlus11R-Trees*-AnyKernel3.zip
+            kernel/out/arch/arm64/boot/Image
+            kernel.config
+            KernelSU-Manager.apk
+          make_latest: true
