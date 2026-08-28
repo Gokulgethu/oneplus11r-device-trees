@@ -159,13 +159,19 @@ def write_conf(conf: dict, path: Path) -> Path:
 
 
 def import_config(src: Path) -> int:
-    """Store a downloaded crave.conf as crave/crave.conf (gitignored)."""
-    if not src.is_file():
-        return die(f"no such file: {src}")
+    """Store a crave.conf as crave/crave.conf (gitignored). '-' reads stdin."""
+    if str(src) == "-":
+        raw = sys.stdin.read()
+        label = "<stdin>"
+    else:
+        if not src.is_file():
+            return die(f"no such file: {src}")
+        raw = src.read_text()
+        label = str(src)
     try:
-        conf = json.loads(src.read_text())
+        conf = json.loads(raw)
     except json.JSONDecodeError as exc:
-        return die(f"{src} is not valid JSON: {exc}")
+        return die(f"{label} is not valid JSON: {exc}")
     token = (conf.get("headers") or {}).get("Authorization", "")
     if not conf.get("username") or not token:
         return die(f"{src} has no username/Authorization — is this the file from "
@@ -178,7 +184,7 @@ def import_config(src: Path) -> int:
                 "projects": [],
                 "server": (conf.get("server") or DEFAULT_SERVER).rstrip("/")}, dest)
     step("Imported credentials")
-    log(f"    from   : {src}")
+    log(f"    from   : {label}")
     log(f"    stored : {dest} (mode 600, gitignored)")
     log(f"    username: {conf['username']}")
     log(f"    token  : {mask(token)}")
@@ -418,7 +424,8 @@ def parse_args(argv=None):
     g.add_argument("--token", help="crave API token (Authorization value from crave.conf)")
     g.add_argument("--config", help="path to a crave.conf (JSON)")
     g.add_argument("--import-config", metavar="PATH",
-                   help="copy a downloaded crave.conf into ./crave.conf (chmod 600) and exit")
+                   help="copy a crave.conf into ./crave.conf (chmod 600) and exit; "
+                        "use - to read the pasted JSON from stdin")
     g.add_argument("--server", help=f"crave API base url (default {DEFAULT_SERVER})")
 
     g = ap.add_argument_group("build")
