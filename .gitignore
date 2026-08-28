@@ -1,0 +1,10 @@
+# Crave credentials -- never commit
+crave.conf
+crave.conf*
+*crave.conf*
+.craverc
+
+# Build output
+out/
+*.zip
+*.img

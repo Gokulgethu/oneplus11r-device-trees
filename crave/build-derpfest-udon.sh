@@ -20,9 +20,11 @@ LM_BRANCH="arena/01a04613-oneplus11r-device-trees"
 BUILD_GOAL="${BUILD_GOAL:-bacon}"
 
 # ---------------------------------------------------------------- init
-if [ ! -d .repo ]; then
-  repo init -u "$MANIFEST_URL" -b "$MANIFEST_BRANCH" --git-lfs
-fi
+# Always (re)init. Crave pre-initialises the workspace with whatever manifest
+# the chosen --projectID maps to, which may not be DerpFest. repo init is
+# idempotent and cheap, so this guarantees we are on DerpFest 16.2 regardless
+# of which project the job was queued against.
+repo init -u "$MANIFEST_URL" -b "$MANIFEST_BRANCH" --git-lfs
 
 # ---------------------------------------------------------------- local manifests
 rm -rf .repo/local_manifests
