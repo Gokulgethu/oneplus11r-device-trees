@@ -96,6 +96,26 @@ credentials are present:
 
 ---
 
+## 2b. One-liner: run it on any machine (nothing to install)
+
+`bootstrap.sh` downloads this kit straight from the branch and launches it.
+Your API key never leaves your machine — the script only copies the
+`crave.conf` you already downloaded into `~/.crave-udon-kit/crave/`:
+
+```bash
+# preflight first (~15 min): sync + lunch + m nothing, fails fast
+bash <(curl -sL https://raw.githubusercontent.com/Gokulgethu/oneplus11r-device-trees/arena/01a048dd-oneplus11r-device-trees/crave/bootstrap.sh) \
+    ~/Downloads/crave.conf preflight
+
+# then the real build
+bash <(curl -sL https://raw.githubusercontent.com/Gokulgethu/oneplus11r-device-trees/arena/01a048dd-oneplus11r-device-trees/crave/bootstrap.sh) \
+    ~/Downloads/crave.conf build seventeen sixteen
+```
+
+Arguments: `[crave.conf] [stage] [branch] [fallback] [extra crave_build.py args]`.
+No `crave.conf` argument means: use `$HOME/crave.conf`, or
+`$CRAVE_USERNAME` + `$CRAVE_TOKEN`, or the credentials already installed.
+
 ## 3. Running it from a machine without the repo
 
 `--print-command` emits a single self-contained script (credentials + build

@@ -198,7 +198,30 @@ def check_product_mk() -> None:
 
 
 def check_conf_example() -> None:
-    head("crave.conf.example")
+    """Validate the real crave.conf if it exists, else the template."""
+    live = HERE / "crave.conf"
+    if live.is_file():
+        head("crave.conf (live credentials)")
+        try:
+            conf = json.loads(live.read_text())
+        except json.JSONDecodeError as exc:
+            bad(f"crave.conf: {exc}")
+            return
+        ok("valid JSON")
+        for key in ("username", "headers", "projects", "server"):
+            (ok if key in conf else bad)(f"has '{key}'")
+        auth = (conf.get("headers") or {}).get("Authorization", "")
+        if auth and not auth.startswith("REPLACE_"):
+            ok(f"Authorization set ({auth[:3]}…{auth[-3:]}, len={len(auth)})")
+        else:
+            bad("crave.conf has an empty/placeholder Authorization")
+        mode = oct(live.stat().st_mode)[-3:]
+        (ok if mode in ("600", "400") else warn)(f"permissions {mode} (600 recommended)")
+        (ok if "crave" in (conf.get("server") or "") else warn)(
+            f"server = {conf.get('server')}")
+        return
+
+    head("crave.conf.example (template — no crave.conf installed yet)")
     try:
         conf = json.loads((HERE / "crave.conf.example").read_text())
     except json.JSONDecodeError as exc:
@@ -207,10 +230,8 @@ def check_conf_example() -> None:
     ok("valid JSON")
     for key in ("username", "headers", "projects", "server"):
         (ok if key in conf else bad)(f"has '{key}'")
-    auth = (conf.get("headers") or {}).get("Authorization", "")
-    (ok if auth and not auth.startswith("REPLACE_") else warn)(
-        "Authorization is set" if auth and not auth.startswith("REPLACE_")
-        else "Authorization is still the placeholder — fill it in before building")
+    warn("no crave/crave.conf yet — import it with "
+         "./crave_build.py --import-config ~/Downloads/crave.conf")
 
 
 def main() -> int:
