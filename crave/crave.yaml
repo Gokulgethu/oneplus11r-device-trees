@@ -1,0 +1,14 @@
+# crave.yaml — placed in .repo/manifests/crave.yaml before running crave.
+# ignoreClientHostname keeps the remote workspace persistent across client restarts.
+DerpFest 14.0:
+  ignoreClientHostname: true
+DerpFest-aosp:
+  ignoreClientHostname: true
+DerpFest-LOS:
+  ignoreClientHostname: true
+PixelOS:
+  ignoreClientHostname: true
+LOS 21:
+  ignoreClientHostname: true
+LOS 22:
+  ignoreClientHostname: true
