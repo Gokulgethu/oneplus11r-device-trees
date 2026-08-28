@@ -34,6 +34,23 @@ This device tree is engineered for **universal compatibility** across all major 
 
 ---
 
+## ☁️ Building on crave.io (API key, no devspace)
+
+A complete, API-key driven crave build kit lives in [`crave/`](crave/README.md):
+
+```bash
+cd crave
+export CRAVE_USERNAME=... CRAVE_TOKEN=...      # from foss.crave.io → API Keys
+python3 preflight.py --net                     # validate the source set
+./crave_build.py --branch seventeen --dry-run  # show what will be sent
+./crave_build.py --branch seventeen --stage preflight
+./crave_build.py --branch seventeen --stage build
+```
+
+No devspace, no GitHub Actions — the driver calls `crave run` directly with your
+`crave.conf` credentials and the build runs on crave's servers. See
+[`crave/README.md`](crave/README.md) for the full documentation.
+
 ## 🛠️ Step-by-Step Build Guide
 
 ### 1. Set Up Local Manifest

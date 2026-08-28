@@ -1,0 +1,7 @@
+# Secrets - never commit (crave API key material)
+crave.conf
+
+# Generated / scratch output of the crave driver
+/crave/work/
+/crave/.cache/
+/crave/manifests/.cache/
