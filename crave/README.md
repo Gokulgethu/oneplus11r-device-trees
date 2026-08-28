@@ -156,6 +156,16 @@ are LineageOS style and need all of them, so
 `python3 preflight.py --net` verifies that **every** one of those ~44
 repositories and revisions actually exists before you spend build hours on it.
 
+### Known blocker already handled
+
+`Gokulgethu/android_vendor_oneplus_udon`, `vendor_oneplus_CPH2487`,
+`vendor_oneplus_udon` and `proprietary_vendor_oneplus_udon` do **not** contain
+real firmware: 6,894 of their files are exactly 32 bytes (an ELF header and
+nothing else) and 399 are 58-byte empty XML configs — placeholders, not blobs.
+Linking a ROM against those is impossible, so the generated manifests point
+`vendor/oneplus/udon` and `vendor/oneplus/sm8450-common` at a real udon blob
+set instead. Point `--local-manifest` at your own manifest to override.
+
 Run `python3 manifests/gen_local_manifest.py --android 16` (or `17`) to
 regenerate the manifests after an upstream change.
 
