@@ -42,6 +42,7 @@ Three ways to hand the credentials to the driver — pick one:
 ```bash
 export CRAVE_USERNAME=... CRAVE_TOKEN=...        # env vars
 cp ~/Downloads/crave.conf crave/crave.conf       # file (gitignored)
+./crave_build.py --import-config ~/Downloads/crave.conf   # validated copy
 ./crave_build.py --username ... --token ...      # flags
 ```
 
@@ -76,6 +77,23 @@ Recommended first run: `--stage preflight`.
 If it passes, re-run with `--stage build` — the workspace is preserved, so
 nothing is re-downloaded.
 
+`--fallback-branch` queues a second branch automatically if the first one
+fails (e.g. try latest, fall back to the version-matched branch):
+
+```bash
+./run_build.sh preflight seventeen sixteen      # or directly:
+./crave_build.py --branch seventeen --fallback-branch sixteen --stage preflight
+```
+
+`run_build.sh` is the same thing with sane defaults and a clear error when no
+credentials are present:
+
+```bash
+./run_build.sh [stage] [branch] [fallback-branch] [extra args]
+./run_build.sh preflight          # == seventeen, fallback sixteen
+./run_build.sh build sixteen      # no fallback
+```
+
 ---
 
 ## 3. Running it from a machine without the repo
@@ -94,6 +112,7 @@ bash /tmp/build-udon.sh
 
 | File | Purpose |
 | :--- | :--- |
+| `run_build.sh` | one-command wrapper (`stage`, `branch`, `fallback`) |
 | `crave_build.py` | the driver: renders, launches, polls, pulls artifacts |
 | `build-pixelos-udon.sh` | runs **on the crave server**; template with `@@LOCAL_MANIFEST@@` / `@@PIXELOS_PRODUCT_MK@@` placeholders |
 | `manifests/gen_local_manifest.py` | generates the udon local manifest (device/vendor/kernel + the CAF HALs PixelOS does not ship) |

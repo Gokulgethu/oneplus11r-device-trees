@@ -158,6 +158,35 @@ def write_conf(conf: dict, path: Path) -> Path:
     return path
 
 
+def import_config(src: Path) -> int:
+    """Store a downloaded crave.conf as crave/crave.conf (gitignored)."""
+    if not src.is_file():
+        return die(f"no such file: {src}")
+    try:
+        conf = json.loads(src.read_text())
+    except json.JSONDecodeError as exc:
+        return die(f"{src} is not valid JSON: {exc}")
+    token = (conf.get("headers") or {}).get("Authorization", "")
+    if not conf.get("username") or not token:
+        return die(f"{src} has no username/Authorization — is this the file from "
+                   f"https://foss.crave.io/app/#/apikeys ?")
+    dest = HERE / "crave.conf"
+    write_conf({"username": conf["username"],
+                "headers": {"Content-Type": "application/json",
+                            "Authorization": token,
+                            "User-Agent": "Crave"},
+                "projects": [],
+                "server": (conf.get("server") or DEFAULT_SERVER).rstrip("/")}, dest)
+    step("Imported credentials")
+    log(f"    from   : {src}")
+    log(f"    stored : {dest} (mode 600, gitignored)")
+    log(f"    username: {conf['username']}")
+    log(f"    token  : {mask(token)}")
+    log(f"    server : {(conf.get('server') or DEFAULT_SERVER)}")
+    log("\n    next: ./crave_build.py --branch seventeen --fallback sixteen --stage preflight")
+    return 0
+
+
 # --------------------------------------------------------------------------- #
 # rendering
 # --------------------------------------------------------------------------- #
@@ -388,6 +417,8 @@ def parse_args(argv=None):
     g.add_argument("--username")
     g.add_argument("--token", help="crave API token (Authorization value from crave.conf)")
     g.add_argument("--config", help="path to a crave.conf (JSON)")
+    g.add_argument("--import-config", metavar="PATH",
+                   help="copy a downloaded crave.conf into ./crave.conf (chmod 600) and exit")
     g.add_argument("--server", help=f"crave API base url (default {DEFAULT_SERVER})")
 
     g = ap.add_argument_group("build")
@@ -415,6 +446,8 @@ def parse_args(argv=None):
     g.add_argument("--poll-interval", type=int, default=120, help="seconds")
     g.add_argument("--max-wait", type=float, default=11.0, help="hours")
     g.add_argument("--pull", action="store_true", help="pull artifacts when the build finishes")
+    g.add_argument("--fallback-branch", choices=BRANCH_CHOICES,
+                   help="if the first branch fails, re-run the build on this one")
     g.add_argument("--no-repo-init", action="store_true",
                    help="skip repo init in the control checkout")
 
@@ -434,6 +467,9 @@ def main(argv=None) -> int:
     if args.print_command:
         # stdout is the generated script, so chatter goes to stderr
         LOG_TO_STDERR = True
+    if args.import_config:
+        return import_config(Path(args.import_config).expanduser())
+
     workdir = Path(args.workdir).expanduser().resolve()
     workdir.mkdir(parents=True, exist_ok=True)
 
@@ -523,38 +559,60 @@ def main(argv=None) -> int:
     if not conf["username"] or not conf["headers"]["Authorization"]:
         return die("missing crave credentials")
 
-    step("Resolving crave project")
-    pid = resolve_project(crave, ws, args)
-    if pid:
-        log(f"    project id: {pid}")
-        args.project_id = pid
+    branches = [args.branch]
+    if args.fallback_branch and args.fallback_branch != args.branch:
+        branches.append(args.fallback_branch)
 
-    step("Starting the build on crave")
-    job_id, url = launch(crave, ws, args, command)
-    status = "unknown"
-    if args.detach:
-        status = poll(crave, ws, job_id, url, args)
-    else:
-        status = "finished (streamed)"
+    reports = []
+    success = False
+    for index, branch in enumerate(branches):
+        if index:
+            warn(f"PixelOS {branches[index - 1]} failed — falling back to {branch}")
+            args.branch = branch
+            script_path, crave_yaml = render(args, workdir)
+            ws = prepare_workspace(args, conf, crave_yaml, workdir)
 
-    report = {
-        "branch": args.branch,
-        "lunch": args.lunch,
-        "stage": args.stage,
-        "job_id": job_id,
-        "job_url": url,
-        "status": status,
-        "artifacts": ARTIFACTS,
-    }
-    report_path = workdir / f"run-{job_id or 'noid'}.json"
-    report_path.write_text(json.dumps(report, indent=2) + "\n")
-    log(f"\n    report: {report_path}")
+        step(f"Resolving crave project ({branch})")
+        pid = resolve_project(crave, ws, args)
+        if pid:
+            log(f"    project id: {pid}")
+            args.project_id = pid
 
-    if args.pull and status and "fail" not in status.lower():
-        step("Pulling artifacts")
-        pull(crave, ws, args)
+        step(f"Starting the PixelOS {branch} build on crave")
+        job_id, url = launch(crave, ws, args, remote_command(script_path, args))
+        status = "unknown"
+        if args.detach:
+            status = poll(crave, ws, job_id, url, args)
+        else:
+            status = "finished (streamed)"
 
-    return 0 if status and "fail" not in status.lower() else 1
+        report = {
+            "branch": branch,
+            "lunch": args.lunch,
+            "stage": args.stage,
+            "job_id": job_id,
+            "job_url": url,
+            "status": status,
+            "artifacts": ARTIFACTS,
+        }
+        report_path = workdir / f"run-{job_id or 'noid'}-{branch}.json"
+        report_path.write_text(json.dumps(report, indent=2) + "\n")
+        reports.append(report)
+        log(f"\n    report: {report_path}")
+
+        success = bool(status) and "fail" not in status.lower()
+        if success:
+            if args.pull:
+                step("Pulling artifacts")
+                pull(crave, ws, args)
+            break
+
+    (workdir / "runs.json").write_text(json.dumps(reports, indent=2) + "\n")
+    if len(reports) > 1:
+        step("Summary")
+        for r in reports:
+            log(f"    {r['branch']:>10}  job {r['job_id'] or '?':>8}  {r['status']}")
+    return 0 if success else 1
 
 
 if __name__ == "__main__":
