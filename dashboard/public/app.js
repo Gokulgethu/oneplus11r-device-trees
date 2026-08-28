@@ -5,10 +5,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const cleanBuildSelect = document.getElementById('cleanBuild');
   const cpuJobsSelect = document.getElementById('cpuJobs');
 
-  const craveRunCode = document.getElementById('craveRunCode');
-  const devspaceCode = document.getElementById('devspaceCode');
-  const ghCode = document.getElementById('ghCode');
-  const pullCode = document.getElementById('pullCode');
+  const craveQueueCode = document.getElementById('craveQueueCode');
+  const detachedQueueCode = document.getElementById('detachedQueueCode');
+  const scriptCode = document.getElementById('scriptCode');
+  const monitorCode = document.getElementById('monitorCode');
 
   const tabButtons = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
@@ -32,8 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanFlag = clean ? ' --clean' : '';
     const cleanCmd = clean ? 'make clean && ' : 'make installclean && ';
 
-    // 1. Crave Run Command
-    const craveCmd = `crave run --no-patch${cleanFlag} -- "rm -rf .repo/local_manifests && \\
+    // Payload executed inside Crave 64GB queue build node
+    const payload = `rm -rf .repo/local_manifests && \\
 mkdir -p .repo/local_manifests && \\
 repo init -u https://github.com/Evolution-X/manifest -b cnb --git-lfs --depth=1 && \\
 curl -sL https://raw.githubusercontent.com/Gokulgethu/oneplus11r-device-trees/${BRANCH}/evolution_udon.xml -o .repo/local_manifests/evolution_udon.xml && \\
@@ -45,33 +45,45 @@ export EVO_BUILD_TYPE=Unofficial && \\
 export WITH_GMS=${withGms} && \\
 source build/envsetup.sh && \\
 lunch ${PRODUCT}-${buildType} && \\
-${cleanCmd}mka bacon -j${cpu}"`;
+${cleanCmd}mka bacon -j${cpu}`;
 
-    craveRunCode.textContent = craveCmd;
+    // 1. Crave Queue Command (attached)
+    if (craveQueueCode) {
+      craveQueueCode.textContent = `crave -c crave.conf run --no-patch${cleanFlag} -- "${payload}"`;
+    }
 
-    // 2. Devspace script preview
-    const devspaceScript = `# Inside Crave Devspace Terminal:
-./crave_build.sh`;
-    devspaceCode.textContent = devspaceScript;
+    // 2. Crave Detached Queue Command
+    if (detachedQueueCode) {
+      detachedQueueCode.textContent = `crave -c crave.conf run --detached --no-patch${cleanFlag} -- "${payload}"`;
+    }
 
-    // 3. GitHub Actions CLI command
-    const ghDispatch = `gh workflow run "Build Evolution X Android 17 (Crave.io)" \\
-  --ref ${BRANCH} \\
-  -f BUILD_TYPE=${buildType} \\
-  -f CLEAN_BUILD=${cleanBuildSelect.value} \\
-  -f BUILD_COMMAND="mka bacon"`;
-    ghCode.textContent = ghDispatch;
+    // 3. Queue build script
+    if (scriptCode) {
+      const cleanOpt = clean ? ' --clean' : '';
+      scriptCode.textContent = `# Run the queue runner with crave.conf authentication:
+./queue_build.sh${cleanOpt}
 
-    // 4. Artifact download
-    const pullCmds = `# Pull full flashable ROM zip
-crave pull "out/target/product/${DEVICE}/EvolutionX-17.0-*.zip"
+# Or detached mode (submits to queue and disconnects):
+./queue_build.sh --detached${cleanOpt}`;
+    }
 
-# Pull individual bootable image partitions
-crave pull out/target/product/${DEVICE}/boot.img
-crave pull out/target/product/${DEVICE}/recovery.img
-crave pull out/target/product/${DEVICE}/vendor_boot.img
-crave pull out/target/product/${DEVICE}/dtbo.img`;
-    pullCode.textContent = pullCmds;
+    // 4. Monitoring & Artifact download
+    if (monitorCode) {
+      monitorCode.textContent = `# 1. Check queue position and running builds:
+crave -c crave.conf list
+
+# 2. View live build log output:
+crave -c crave.conf getlog
+
+# 3. Pull flashable ROM package when finished:
+crave -c crave.conf pull "out/target/product/${DEVICE}/EvolutionX-17.0-*.zip"
+
+# 4. Pull partition images:
+crave -c crave.conf pull out/target/product/${DEVICE}/boot.img
+crave -c crave.conf pull out/target/product/${DEVICE}/recovery.img
+crave -c crave.conf pull out/target/product/${DEVICE}/vendor_boot.img
+crave -c crave.conf pull out/target/product/${DEVICE}/dtbo.img`;
+    }
   }
 
   // Listeners for command inputs

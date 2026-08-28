@@ -1,6 +1,15 @@
 # 🚀 Crave.io Build Guide: Evolution X (Android 17) for OnePlus 11R (`udon` / `CPH2487`)
 
-This guide explains how to compile **Evolution X 12.1 (Android 17 - `cnb`)** for the **OnePlus 11R 5G (`udon` / `CPH2487`)** using **[Crave.io](https://crave.io)** cloud devspaces.
+This guide explains how to compile **Evolution X 12.1 (Android 17 - `cnb`)** for the **OnePlus 11R 5G (`udon` / `CPH2487`)** using **`crave.conf` to submit builds to the Crave cloud queue** at [foss.crave.io](https://foss.crave.io).
+
+---
+
+## ⚠️ Important: Queue vs Devspace
+
+> **Do NOT try to build the ROM inside devspace hardware (`crave devspace`).**
+>
+> - **Devspaces** have limited RAM and CPU meant only for file editing and git operations. Compiling full AOSP/Evolution X inside devspace will run out of memory.
+> - **Build Queue (`crave run` with `crave.conf`)**: Submits the job to Crave's dedicated high-performance cloud build cluster (64GB+ RAM, 32 vCPUs, NVMe build caching). Your build waits in the queue, gets picked up by a build node, compiles rapidly, and can be pulled once finished.
 
 ---
 
@@ -14,50 +23,23 @@ This guide explains how to compile **Evolution X 12.1 (Android 17 - `cnb`)** for
 | **Android Version** | **Android 17** (Manifest Branch: `cnb`, Version: `12.1`) |
 | **Target Product** | `evolution_udon` |
 | **Lunch Target** | `evolution_udon-userdebug` |
-| **Build Platform** | Crave.io Cloud Build Nodes (foss.crave.io) |
+| **Authentication** | `crave.conf` API Key |
+| **Build Host** | Crave Cloud Build Queue (`foss.crave.io`) |
 
 ---
 
-## ⚡ Method 1: Automatic Build via GitHub Actions (One-Click)
+## 🔑 Step 1: Set Up `crave.conf`
 
-The repository includes a ready-to-use GitHub Actions workflow located at `ci/crave_evolution_x.yml` (can be symlinked or placed into `.github/workflows/crave_evolution_x.yml`).
+The Crave CLI requires an API key in `crave.conf` to authenticate your account and submit builds to the queue.
 
-### Prerequisites
-1. Go to your repository on GitHub: **Settings > Secrets and variables > Actions**.
-2. Optional: Add `CRAVE_USERNAME` and `CRAVE_TOKEN` (from `crave.conf` downloaded from [foss.crave.io](https://foss.crave.io)).
-   *(If omitted, built-in defaults configured for Gokulgethu are automatically applied).*
+A ready-to-use template is included at `crave.conf.sample`:
 
-### Run the Build:
-1. Navigate to the **Actions** tab on GitHub.
-2. Select **Build Evolution X Android 17 (Crave.io)**.
-3. Click **Run workflow**:
-   - **Build Variant:** `userdebug`
-   - **Clean workspace:** `no` (uses cached ccache on Crave for ~15 min builds)
-   - **Compilation Command:** `mka bacon`
-4. Click **Run workflow**. Crave cloud nodes will compile the ROM, pull the `.zip` and `.img` files, and automatically upload them as workflow artifacts and release assets!
-
----
-
-## 🖥️ Method 2: Crave Devspace CLI Build (Recommended for Developers)
-
-### Step 1: Install and Configure Crave CLI
-If you don't have the `crave` binary on your machine:
-```bash
-# Download Crave CLI
-curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s --
-sudo mv crave /usr/local/bin/
-
-# Verify installation
-crave version
-```
-
-Place your `crave.conf` in your home directory `~/.crave/crave.conf` or `~/crave.conf`:
 ```json
 {
   "username": "YOUR_EMAIL@gmail.com",
   "headers": {
     "Content-Type": "application/json",
-    "Authorization": "YOUR_CRAVE_JWT_TOKEN",
+    "Authorization": "YOUR_JWT_CRAVE_TOKEN",
     "User-Agent": "Crave"
   },
   "projects": [],
@@ -65,20 +47,39 @@ Place your `crave.conf` in your home directory `~/.crave/crave.conf` or `~/crave
 }
 ```
 
----
-
-### Step 2: Initialize Devspace or Run One-Shot Command
-
-You can use the included `crave_run.sh` script or run the command directly:
-
+Copy the sample or download your active key from [foss.crave.io/api/keys](https://foss.crave.io):
 ```bash
-./crave_run.sh
+cp crave.conf.sample crave.conf
+# Or place it at ~/.crave/crave.conf
 ```
 
-Or execute the complete Crave pipeline manually:
+---
+
+## ⚡ Step 2: Queue the Build
+
+### Option A: Using the Automated Queue Runner (`queue_build.sh`)
+
+The included `queue_build.sh` script handles CLI verification, parameter parsing, and queue submission:
 
 ```bash
-crave run --no-patch -- "rm -rf .repo/local_manifests && \
+# Standard queue submission (streams live build output in your terminal)
+./queue_build.sh
+
+# Detached queue submission (submits to queue and returns immediately)
+./queue_build.sh --detached
+
+# Clean rebuild (forces full clean build without cache)
+./queue_build.sh --clean
+```
+
+---
+
+### Option B: Manual Crave CLI Queue Command
+
+Run directly from your terminal using `crave run`:
+
+```bash
+crave -c crave.conf run --no-patch -- "rm -rf .repo/local_manifests && \
 mkdir -p .repo/local_manifests && \
 repo init -u https://github.com/Evolution-X/manifest -b cnb --git-lfs --depth=1 && \
 curl -sL https://raw.githubusercontent.com/Gokulgethu/oneplus11r-device-trees/arena/01a042ed-oneplus11r-device-trees/evolution_udon.xml -o .repo/local_manifests/evolution_udon.xml && \
@@ -94,17 +95,42 @@ make installclean && \
 mka bacon -j\$(nproc --all)"
 ```
 
+To queue in the background (detached mode):
+```bash
+crave -c crave.conf run --detached --no-patch -- "..."
+```
+
 ---
 
-### Step 3: Pull the Built ROM and Images
+## 📊 Step 3: Monitoring the Build Queue
 
-Once compilation finishes, pull the artifacts to your local workstation:
+You can check the status of your queued build at any time:
+
+1. **Web Dashboard**: View your queue position and live graphs at [https://foss.crave.io/#/builds](https://foss.crave.io/#/builds).
+2. **CLI List**:
+   ```bash
+   crave list
+   ```
+3. **Live Log Stream**:
+   ```bash
+   crave getlog
+   ```
+4. **Cancel / Stop Build**:
+   ```bash
+   crave stop
+   ```
+
+---
+
+## 📦 Step 4: Download Build Artifacts
+
+Once the queue completes compilation:
 
 ```bash
-# Pull the flashable ROM zip
+# Pull flashable Evolution X ROM zip
 crave pull "out/target/product/udon/EvolutionX-17.0-*.zip"
 
-# Pull the boot and recovery images
+# Pull partition images for recovery/fastboot
 crave pull out/target/product/udon/boot.img
 crave pull out/target/product/udon/recovery.img
 crave pull out/target/product/udon/dtbo.img
@@ -113,11 +139,9 @@ crave pull out/target/product/udon/vendor_boot.img
 
 ---
 
-## 📦 Manifest Architecture (`evolution_udon.xml`)
+## ⚙️ Manifest Architecture (`evolution_udon.xml`)
 
-The Crave build pulls these exact trees for OnePlus 11R:
-
-| Component | Path | Source Repository | Branch |
+| Component | Path in Tree | Remote Repository | Branch |
 |:---|:---|:---|:---|
 | **Device Tree** | `device/oneplus/udon` | `Gokulgethu/oneplus11r-device-trees` | `arena/01a042ed-oneplus11r-device-trees` |
 | **Common Tree** | `device/oneplus/sm8450-common` | `pjgowtham/android_device_oneplus_sm8450-common` | `lineage-22.1` |
@@ -130,12 +154,6 @@ The Crave build pulls these exact trees for OnePlus 11R:
 
 ## 📲 Flashing Instructions (OnePlus 11R 5G)
 
-### Pre-requisites
-- Unlocked bootloader on official OxygenOS 14/15/16 firmware.
-- Custom Recovery installed (OrangeFox or TWRP recovery).
-- Latest platform-tools (`fastboot`, `adb`).
-
-### Step-by-Step Installation:
 1. **Reboot to Recovery**:
    ```bash
    adb reboot recovery
@@ -143,9 +161,9 @@ The Crave build pulls these exact trees for OnePlus 11R:
 2. **Format Data** *(Mandatory for Android 17 File-Based Encryption)*:
    - In recovery, navigate to **Wipe > Format Data** and type `yes`.
 3. **Flash ROM Zip**:
-   - In recovery, select **Apply update from ADB** (or Advanced > ADB Sideload).
+   - Select **Apply update from ADB** (or Advanced > ADB Sideload).
    ```bash
    adb sideload EvolutionX-17.0-*-udon-*.zip
    ```
 4. **Reboot**:
-   - Reboot system. The first boot on Android 17 takes 2–4 minutes.
+   - Select **Reboot system now**. Initial boot takes 2–4 minutes.

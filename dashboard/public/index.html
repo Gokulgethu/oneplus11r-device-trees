@@ -126,43 +126,50 @@
           <!-- Command Display Tabs -->
           <div class="tabs-container">
             <div class="tab-buttons">
-              <button class="tab-btn active" data-tab="craveRunTab">Crave CLI One-Shot (crave run)</button>
-              <button class="tab-btn" data-tab="devspaceTab">Crave Devspace Shell</button>
-              <button class="tab-btn" data-tab="ghTab">GitHub Actions Workflow</button>
-              <button class="tab-btn" data-tab="pullTab">Artifact Download (crave pull)</button>
+              <button class="tab-btn active" data-tab="craveQueueTab">Crave Queue (crave.conf)</button>
+              <button class="tab-btn" data-tab="detachedQueueTab">Detached Queue (Background)</button>
+              <button class="tab-btn" data-tab="scriptTab">queue_build.sh Script</button>
+              <button class="tab-btn" data-tab="monitorTab">Queue Monitoring & Pull</button>
             </div>
 
-            <div class="tab-content active" id="craveRunTab">
+            <div class="tab-content active" id="craveQueueTab">
               <div class="code-wrapper">
-                <pre><code id="craveRunCode">crave run --no-patch -- "..."</code></pre>
-                <button class="copy-btn" data-target="craveRunCode">📋 Copy Command</button>
+                <pre><code id="craveQueueCode">crave -c crave.conf run --no-patch -- "..."</code></pre>
+                <button class="copy-btn" data-target="craveQueueCode">📋 Copy Queue Command</button>
               </div>
-              <p class="tab-note">💡 Run this directly from your terminal where <code>crave</code> CLI is installed.</p>
+              <p class="tab-note">💡 Submits to the Crave 64GB cloud queue using <code>crave.conf</code> authentication and streams progress.</p>
             </div>
 
-            <div class="tab-content" id="devspaceTab">
+            <div class="tab-content" id="detachedQueueTab">
               <div class="code-wrapper">
-                <pre><code id="devspaceCode">./crave_build.sh</code></pre>
-                <button class="copy-btn" data-target="devspaceCode">📋 Copy Script</button>
+                <pre><code id="detachedQueueCode">crave -c crave.conf run --detached --no-patch -- "..."</code></pre>
+                <button class="copy-btn" data-target="detachedQueueCode">📋 Copy Detached Command</button>
               </div>
-              <p class="tab-note">💡 Run inside an active Crave Devspace terminal container.</p>
+              <p class="tab-note">💡 Submits the job to the Crave queue in the background. You can safely disconnect your terminal.</p>
             </div>
 
-            <div class="tab-content" id="ghTab">
+            <div class="tab-content" id="scriptTab">
               <div class="code-wrapper">
-                <pre><code id="ghCode">gh workflow run "Build Evolution X Android 17 (Crave.io)" --ref arena/01a042ed-oneplus11r-device-trees</code></pre>
-                <button class="copy-btn" data-target="ghCode">📋 Copy GH CLI</button>
+                <pre><code id="scriptCode">./queue_build.sh</code></pre>
+                <button class="copy-btn" data-target="scriptCode">📋 Copy Runner</button>
               </div>
-              <p class="tab-note">💡 Triggers the automated GitHub Actions runner which handles Crave dispatch, artifact pulling, and release publishing.</p>
+              <p class="tab-note">💡 Helper script that auto-detects <code>crave.conf</code>, submits to queue, and pulls artifacts upon completion.</p>
             </div>
 
-            <div class="tab-content" id="pullTab">
+            <div class="tab-content" id="monitorTab">
               <div class="code-wrapper">
-                <pre><code id="pullCode">crave pull out/target/product/udon/*.zip
+                <pre><code id="monitorCode"># Check position in queue and running builds:
+crave list
+
+# Stream live compilation logs:
+crave getlog
+
+# Pull flashable ROM zip after queue finishes:
+crave pull out/target/product/udon/*.zip
 crave pull out/target/product/udon/*.img</code></pre>
-                <button class="copy-btn" data-target="pullCode">📋 Copy Pull Commands</button>
+                <button class="copy-btn" data-target="monitorCode">📋 Copy Monitoring Commands</button>
               </div>
-              <p class="tab-note">💡 Pulls the generated ROM zip, boot, dtbo, vendor_boot, and recovery images from Crave cloud storage.</p>
+              <p class="tab-note">💡 Track your queue status or inspect logs at any time.</p>
             </div>
           </div>
         </section>
@@ -180,10 +187,11 @@ crave pull out/target/product/udon/*.img</code></pre>
           <div class="file-selector-row">
             <button class="file-chip active" data-file="evolution_udon.mk">evolution_udon.mk</button>
             <button class="file-chip" data-file="evolution_udon.xml">evolution_udon.xml</button>
+            <button class="file-chip" data-file="queue_build.sh">queue_build.sh</button>
+            <button class="file-chip" data-file="crave.conf.sample">crave.conf.sample</button>
             <button class="file-chip" data-file="BoardConfig.mk">BoardConfig.mk</button>
             <button class="file-chip" data-file="BoardConfigCommon.mk">BoardConfigCommon.mk</button>
             <button class="file-chip" data-file="crave.yaml">crave.yaml</button>
-            <button class="file-chip" data-file="crave_build.sh">crave_build.sh</button>
             <button class="file-chip" data-file="ci/crave_evolution_x.yml">crave_evolution_x.yml</button>
           </div>
 

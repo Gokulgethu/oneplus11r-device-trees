@@ -44,6 +44,8 @@ const server = http.createServer((req, res) => {
       'device.mk',
       'evolution_udon.xml',
       'crave.yaml',
+      'queue_build.sh',
+      'crave.conf.sample',
       'crave_build.sh',
       'crave_run.sh',
       'ci/crave_evolution_x.yml',

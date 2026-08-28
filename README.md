@@ -33,35 +33,29 @@ This device tree is engineered for **universal compatibility** across all major 
 
 ---
 
-## ⚡ Fast Cloud Build on Crave.io (Evolution X Android 17)
+## ⚡ Build via Crave Cloud Queue (Evolution X Android 17)
 
-To build **Evolution X Android 17 (12.1 `cnb`)** on [Crave.io](https://crave.io) cloud nodes:
+Builds are submitted to the **Crave Cloud Queue** using `crave.conf` (NOT inside limited devspace hardware):
 
-### Option A: GitHub Actions (Automated)
-Run the workflow under `ci/crave_evolution_x.yml` (or copied to `.github/workflows/`) via the **Actions** tab on GitHub. It automatically spins up Crave devspace, syncs repositories, compiles `evolution_udon-userdebug`, and uploads flashable `.zip` and `.img` artifacts!
+1. **Configure `crave.conf`**:
+   ```bash
+   cp crave.conf.sample crave.conf
+   ```
+2. **Submit to Queue**:
+   ```bash
+   # Standard attached stream:
+   ./queue_build.sh
 
-### Option B: Crave CLI One-Shot Command
-Run directly with the Crave CLI:
-```bash
-./crave_run.sh
-```
-Or execute manually:
-```bash
-crave run --no-patch -- "rm -rf .repo/local_manifests && \
-mkdir -p .repo/local_manifests && \
-repo init -u https://github.com/Evolution-X/manifest -b cnb --git-lfs --depth=1 && \
-curl -sL https://raw.githubusercontent.com/Gokulgethu/oneplus11r-device-trees/arena/01a042ed-oneplus11r-device-trees/evolution_udon.xml -o .repo/local_manifests/evolution_udon.xml && \
-/opt/crave/resync.sh && \
-[ -d device/oneplus/udon ] && [ ! -d device/oneplus/CPH2487 ] && ln -sf udon device/oneplus/CPH2487; \
-export BUILD_USERNAME=Gokulgethu && \
-export BUILD_HOSTNAME=crave && \
-export EVO_BUILD_TYPE=Unofficial && \
-export WITH_GMS=true && \
-source build/envsetup.sh && \
-lunch evolution_udon-userdebug && \
-make installclean && \
-mka bacon -j\$(nproc --all)"
-```
+   # Or detached background queue:
+   ./queue_build.sh --detached
+   ```
+3. **Monitor Queue**:
+   - Web: [https://foss.crave.io/#/builds](https://foss.crave.io/#/builds)
+   - CLI: `crave list` / `crave getlog`
+4. **Pull Artifacts**:
+   ```bash
+   crave pull "out/target/product/udon/EvolutionX-17.0-*.zip"
+   ```
 
 See [CRAVE_BUILD_GUIDE.md](CRAVE_BUILD_GUIDE.md) for complete detailed instructions.
 

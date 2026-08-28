@@ -1,0 +1,10 @@
+{
+  "username": "gokulgethu30@gmail.com",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE2MzAsInRlYW1JZCI6MTQsImlzQXBpS2V5Ijp0cnVlLCJpYXQiOjE3ODc0NzY1NDl9.BYhCFx1bgsvRTx6UbyXBodGC8NPNY0wl1cE4RoRSW0U",
+    "User-Agent": "Crave"
+  },
+  "projects": [],
+  "server": "https://foss.crave.io/api"
+}
