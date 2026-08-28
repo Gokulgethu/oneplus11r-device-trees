@@ -144,7 +144,7 @@ jobs:
           if [ "${{ inputs.wait }}" = "true" ]; then
             ARGS+=(--detach --poll-interval 60 --max-wait "${{ inputs.wait_hours }}")
           else
-            ARGS+=(--detach --poll-interval 60 --max-wait 0.05)
+            ARGS+=(--detach --max-wait 0)   # submit and exit; crave keeps building
           fi
           python3 crave_build.py "${ARGS[@]}" | tee "$GITHUB_WORKSPACE/crave-run.log"
 

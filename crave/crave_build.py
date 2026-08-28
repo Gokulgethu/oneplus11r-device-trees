@@ -588,8 +588,12 @@ def main(argv=None) -> int:
         step(f"Starting the PixelOS {branch} build on crave")
         job_id, url = launch(crave, ws, args, remote_command(script_path, args))
         status = "unknown"
-        if args.detach:
+        if args.detach and args.max_wait > 0.1:
             status = poll(crave, ws, job_id, url, args)
+        elif args.detach:
+            # fire-and-forget: crave keeps the build running server side
+            status = "submitted (detached)"
+            log(f"    not waiting - follow it at: {url or 'the crave dashboard'}")
         else:
             status = "finished (streamed)"
 
