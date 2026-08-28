@@ -1,24 +1,27 @@
 #!/usr/bin/env bash
 #
-# Evolution X (Android 17, manifest branch "cnb") for OnePlus 11R 5G
-#   codename: udon   model: CPH2487   SoC: SM8475
+# DerpFest 16.2 (Android 16 / LineageOS 23.2 base) for OnePlus 11R 5G
+#   codename: udon    model: CPH2487    SoC: SM8475 (taro)
 #
-# This script is meant to be executed BY A CRAVE BUILD NODE, i.e. passed to
-# `crave run`, NOT run inside the devspace. See crave/README.md.
+# Executed BY A CRAVE BUILD NODE via `crave run` -- never inside the devspace.
+# See crave/README.md.
 #
 set -euxo pipefail
 
 DEVICE="udon"
-LUNCH_TARGET="evolution_${DEVICE}-userdebug"
-MANIFEST_URL="https://github.com/Evolution-X/manifest"
-MANIFEST_BRANCH="cnb"                    # Android 17
+LUNCH_TARGET="lineage_${DEVICE}-userdebug"
+MANIFEST_URL="https://github.com/DerpFest-AOSP/android_manifest.git"
+MANIFEST_BRANCH="16.2"
 LM_REPO="https://github.com/Gokulgethu/oneplus11r-device-trees"
 LM_BRANCH="arena/01a04613-oneplus11r-device-trees"
 
+# BUILD_GOAL=nothing  -> parse-only smoke test (cheap, minutes)
+# BUILD_GOAL=bacon    -> full flashable zip
+BUILD_GOAL="${BUILD_GOAL:-bacon}"
+
 # ---------------------------------------------------------------- init
-# Crave projects usually arrive pre-initialised. Only init if they did not.
 if [ ! -d .repo ]; then
-  repo init -u "$MANIFEST_URL" -b "$MANIFEST_BRANCH" --git-lfs --depth=1
+  repo init -u "$MANIFEST_URL" -b "$MANIFEST_BRANCH" --git-lfs
 fi
 
 # ---------------------------------------------------------------- local manifests
@@ -30,7 +33,7 @@ cp "$tmp_lm/crave/local_manifests/"*.xml .repo/local_manifests/
 rm -rf "$tmp_lm"
 
 # ---------------------------------------------------------------- sync
-# /opt/crave/resync.sh is Crave's cache-accelerated wrapper around `repo sync`.
+# /opt/crave/resync.sh is Crave's cache-accelerated `repo sync` wrapper.
 if [ -x /opt/crave/resync.sh ]; then
   /opt/crave/resync.sh
 else
@@ -40,4 +43,11 @@ fi
 # ---------------------------------------------------------------- build
 source build/envsetup.sh
 lunch "$LUNCH_TARGET"
-mka bacon -j"$(nproc --all)"
+
+if [ "$BUILD_GOAL" = "nothing" ]; then
+  # Full Kati/Soong parse without compiling anything. Surfaces missing
+  # paths, dead HAL module names and broken inherits in minutes.
+  m nothing
+else
+  mka bacon -j"$(nproc --all)"
+fi

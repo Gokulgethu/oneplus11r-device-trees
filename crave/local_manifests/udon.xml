@@ -1,75 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Local manifest for OnePlus 11R 5G (udon / CPH2487, SM8475)
-  Target: Evolution X Android 17 (manifest branch "cnb", LineageOS 23.x base)
+  Local manifest for OnePlus 11R 5G (udon / CPH2487, SM8475 / taro)
+  Target: DerpFest 16.2  (Android 16, LineageOS 23.2 base)
 
-  STATUS: BRING-UP INCOMPLETE. See crave/README.md.
-  Every <project> below has been verified to exist on GitHub at the stated
-  revision. Entries that are still missing an A17-era upstream are listed as
-  XML comments rather than live projects, so `repo sync` does not hard-fail.
+    repo init -u https://github.com/DerpFest-AOSP/android_manifest.git -b 16.2 (with git-lfs)
+
+  STATUS: BRING-UP IN PROGRESS. Read crave/README.md before building.
+  Every <project> below was verified to exist at the stated revision.
 -->
 <manifest>
 
-  <!-- ================= Device trees ================= -->
+  <remote name="gh" fetch="https://github.com/" />
 
-  <!-- This repository (integration tree). Pin to the branch you are building. -->
+  <!-- ================= Device tree ================= -->
+
+  <!-- This repository. -->
   <project name="Gokulgethu/oneplus11r-device-trees"
            path="device/oneplus/udon"
-           remote="github"
+           remote="gh"
            revision="arena/01a04613-oneplus11r-device-trees" />
 
   <!--
-    Common chipset tree: device/oneplus/sm8475-common
+    Common chipset tree.
 
-    The ONLY public sm8475-common tree is Teamslow/device_oneplus_sm8475-common,
-    branch "13" (last commit 2023-04-15, Android 13). It is NOT source-compatible
-    with an Android 17 / LineageOS 23.x base and is therefore intentionally NOT
-    synced here. Uncomment only if you are actively forward-porting it.
+    LineageOS/android_device_oneplus_sm8450-common is an EMPTY placeholder
+    repo (0 bytes, no branches) and there is no LineageOS sm8475-common at
+    all, so the only real tree is Teamslow's Android 13 one. It supplies the
+    directories this device tree references but does not contain:
+    bluetooth/include, sepolicy/, fingerprint/, KeyHandler, gpt-utils,
+    interfaces/, oplus-fwk/, and the libinit_oplus_taro /
+    libudfps_extension.oplus_taro Soong modules.
 
-    <project name="Teamslow/device_oneplus_sm8475-common"
-             path="device/oneplus/sm8475-common"
-             remote="github"
-             revision="13" />
+    It is Android 13 and WILL need forward-porting to 23.2.
   -->
+  <project name="Teamslow/device_oneplus_sm8475-common"
+           path="device/oneplus/sm8475-common"
+           remote="gh"
+           revision="13" />
 
   <!-- ================= Hardware HALs ================= -->
 
-  <!-- Oplus-specific HALs (touch, vibrator, biometrics glue). -->
   <project name="LineageOS/android_hardware_oplus"
            path="hardware/oplus"
-           remote="github"
-           revision="lineage-23.0" />
+           remote="gh"
+           revision="lineage-23.2" />
 
   <!-- ================= Kernel ================= -->
 
   <!--
-    No Android 17-era kernel exists for SM8475/udon.
-
-    Options, in order of realism:
-      1. Prebuilt kernel + modules from a matching OxygenOS build
-         (Teamslow/device_oneplus_CPH2487-prebuilt, branch "13").
-      2. OnePlusOSS/android_kernel_oneplus_sm8475, branch
-         oneplus_sm8475_t_13.0_oneplus_11R_5G  (5.10 GKI, Android 13).
-      3. Forward-port (2) onto a 6.x GKI base. Large effort.
-
-    <project name="OnePlusOSS/android_kernel_oneplus_sm8475"
-             path="kernel/oneplus/sm8475"
-             remote="github"
-             revision="oneplus_sm8475_t_13.0_oneplus_11R_5G" />
+    LineageOS/android_kernel_oneplus_sm8450 is actively maintained but tops
+    out at lineage-22.2 (Android 15, 5.10 GKI). There is no 23.x branch.
+    SM8475 is the same taro/waipio kernel family as SM8450, so this is the
+    closest real source. Expect to fix up the defconfig and DTB target.
   -->
+  <project name="LineageOS/android_kernel_oneplus_sm8450"
+           path="kernel/oneplus/sm8475"
+           remote="gh"
+           revision="lineage-22.2" />
+
+  <project name="LineageOS/android_kernel_oneplus_sm8450-devicetrees"
+           path="kernel/oneplus/sm8450-devicetrees"
+           remote="gh"
+           revision="lineage-22.2" />
 
   <!-- ================= Proprietary blobs ================= -->
 
   <!--
-    TheMuppets has no udon / CPH2487 vendor repo. The only public vendor tree is
-    Teamslow/vendor_oneplus_2487 (branch "13" / "common", Android 13 blobs).
-    Blobs must instead be extracted from a CPH2487 OxygenOS dump that matches the
-    firmware you intend to ship, via ./extract-files.sh in this device tree.
+    TheMuppets has no udon / CPH2487 vendor tree.
 
-    <project name="Teamslow/vendor_oneplus_2487"
-             path="vendor/oneplus/udon"
-             remote="github"
-             revision="13" />
+    Generate vendor/oneplus/{udon,sm8475-common} yourself from a CPH2487
+    OxygenOS dump matching the fingerprint in lineage_udon.mk:
+
+        cd device/oneplus/sm8475-common && ./extract-files.sh <path-to-dump>
+        cd device/oneplus/udon          && ./extract-files.sh <path-to-dump>
+
+    Teamslow/vendor_oneplus_2487 (branch "13") exists but carries Android 13
+    blobs, which will not satisfy a 23.2 vendor interface.
   -->
 
 </manifest>

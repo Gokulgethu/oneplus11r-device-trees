@@ -20,47 +20,77 @@ This device tree is engineered for **universal compatibility** across all major 
 
 ---
 
-## 🚀 Supported Custom ROMs & Lunch Commands
+## 🚀 Build target
 
-| Custom ROM | Lunch Command | Product Makefile |
-|:---|:---|:---|
-| **LineageOS** | `lunch lineage_udon-userdebug` | `lineage_udon.mk` |
-| **crDroid** | `lunch crdroid_udon-userdebug` | `crdroid_udon.mk` |
-| **PixelOS / PixelExperience** | `lunch aosp_udon-userdebug` | `aosp_udon.mk` |
-| **Evolution X** | `lunch evolution_udon-userdebug` | `evolution_udon.mk` |
-| **RisingOS** | `lunch rising_udon-userdebug` | `rising_udon.mk` |
-| **Project Matrixx / DerpFest** | `lunch aosp_udon-userdebug` | `aosp_udon.mk` |
-| **Generic AOSP / AOSP-Krypton** | `lunch aosp_udon-userdebug` | `aosp_udon.mk` |
+**Primary target: DerpFest 16.2** (Android 16, LineageOS 23.2 base).
+
+| Custom ROM | Manifest | Lunch Command | Product Makefile |
+|:---|:---|:---|:---|
+| **DerpFest** | `DerpFest-AOSP/android_manifest` `-b 16.2` | `lunch lineage_udon-userdebug` | `lineage_udon.mk` |
+| **LineageOS** | `LineageOS/android` `-b lineage-23.2` | `lunch lineage_udon-userdebug` | `lineage_udon.mk` |
+
+DerpFest ships its vendor fork at `vendor/lineage` and keeps LineageOS's
+`lineage_<codename>` product naming, so the lunch target is `lineage_udon`,
+not `derp_udon`.
+
+The `aosp_udon.mk`, `crdroid_udon.mk`, `evolution_udon.mk` and `rising_udon.mk`
+makefiles are retained but have **not** been updated for a 23.x base.
 
 ---
 
-## 🛠️ Step-by-Step Build Guide
+## ⚠️ Build status: bring-up incomplete
 
-### 1. Set Up Local Manifest
-Add the local manifest so all required repositories (device tree, common tree, kernel, hardware HALs) are pulled automatically:
+This tree does not compile yet. The blockers are upstream availability, not
+configuration:
+
+- **No modern common tree.** `device/oneplus/sm8475-common` exists only as
+  `Teamslow/device_oneplus_sm8475-common` branch `13` (last commit 2023-04-15,
+  Android 13). `LineageOS/android_device_oneplus_sm8450-common` is an *empty
+  placeholder repo* — OnePlus SM8450/SM8475 was never brought up upstream.
+- **No modern kernel.** `LineageOS/android_kernel_oneplus_sm8450` tops out at
+  `lineage-22.2` (Android 15, 5.10 GKI).
+- **No published blobs.** TheMuppets has no `udon` / CPH2487 vendor tree; they
+  must be extracted from an OxygenOS dump.
+- **Android 13-era HALs.** `common.mk` still requests HIDL modules such as
+  `android.hardware.audio@6.0-impl` that are AIDL-only on 23.2.
+
+Read **[`crave/README.md`](crave/README.md)** for the full audit, the Crave
+build commands, and the remaining task list.
+
+---
+
+## 🛠️ Build Guide
+
+### 1. Sync the source
 
 ```bash
-git clone https://github.com/Gokulgethu/local_manifests.git .repo/local_manifests
+repo init -u https://github.com/DerpFest-AOSP/android_manifest.git -b 16.2 --git-lfs
+mkdir -p .repo/local_manifests
+curl -sL -o .repo/local_manifests/udon.xml \
+  https://raw.githubusercontent.com/Gokulgethu/oneplus11r-device-trees/main/crave/local_manifests/udon.xml
 repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
 ```
 
-### 2. Extract Proprietary Blobs
+### 2. Extract proprietary blobs
+
+From a CPH2487 OxygenOS dump matching the fingerprint in `lineage_udon.mk`:
+
 ```bash
-cd device/oneplus/udon
-./extract-files.sh
+cd device/oneplus/sm8475-common && ./extract-files.sh <path-to-dump>
+cd ../udon                      && ./extract-files.sh <path-to-dump>
 ```
 
-### 3. Build Your Chosen ROM
+### 3. Verify the tree parses before compiling
+
 ```bash
-# Setup environment
 source build/envsetup.sh
-
-# Select lunch target (example: LineageOS or crDroid)
 lunch lineage_udon-userdebug
-# or
-lunch crdroid_udon-userdebug
+m nothing        # full Kati/Soong parse, no compilation
+```
 
-# Start compilation
+### 4. Build
+
+```bash
 mka bacon -j$(nproc --all)
 ```
 
