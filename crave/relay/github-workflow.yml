@@ -1,0 +1,161 @@
+#
+# INSTALL: copy this file to .github/workflows/crave-pixelos-udon.yml
+#
+#   mkdir -p .github/workflows
+#   cp crave/relay/github-workflow.yml .github/workflows/crave-pixelos-udon.yml
+#   git add .github && git commit -m "ci: crave relay" && git push
+#
+# (The Arena GitHub App has no `workflows` permission, so it cannot create
+#  this file itself - hence the one manual copy.)
+#
+# THEN add two repository secrets (Settings -> Secrets and variables ->
+# Actions -> New repository secret):  CRAVE_USERNAME  and  CRAVE_TOKEN
+#
+# Relay that submits a PixelOS build for OnePlus 11R (udon) to crave.io using
+# the crave API key stored in repository secrets.
+#
+# This is NOT crave_aosp_builder and it does not use a devspace: it runs this
+# repo's own crave/crave_build.py, which calls `crave run --no-patch` directly.
+# The GitHub runner is only a launcher - all compilation happens on crave's
+# servers, and crave keeps the build running even if this job ends.
+#
+name: PixelOS udon (crave relay)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'list = show my crave projects, build = submit a job'
+        required: true
+        default: 'build'
+        type: choice
+        options: [build, list]
+      stage:
+        description: 'stage to run on the crave server'
+        required: true
+        default: 'preflight'
+        type: choice
+        options: [sync, preflight, build, all]
+      branch:
+        description: 'PixelOS branch'
+        required: true
+        default: 'seventeen'
+        type: choice
+        options: [seventeen, sixteen]
+      fallback:
+        description: 'branch to try automatically if the first one fails'
+        required: true
+        default: 'sixteen'
+        type: choice
+        options: [sixteen, seventeen, none]
+      wait:
+        description: 'wait for the job to finish (poll + tail the log)'
+        required: true
+        default: true
+        type: boolean
+      wait_hours:
+        description: 'how long to keep waiting'
+        required: true
+        default: '5'
+      project_id:
+        description: 'crave project id (blank = auto-detect with crave list)'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  crave:
+    runs-on: ubuntu-latest
+    timeout-minutes: 335
+
+    steps:
+      - name: Check out the kit
+        uses: actions/checkout@v4
+
+      - name: Install repo
+        run: |
+          mkdir -p "$HOME/bin"
+          curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo -o "$HOME/bin/repo"
+          chmod +x "$HOME/bin/repo"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Install the crave CLI
+        run: |
+          set -euo pipefail
+          VERSION=0.2-7183
+          curl -fsSL -o ./crave \
+            "https://github.com/accupara/crave/releases/download/${VERSION}/crave-${VERSION}-linux-amd64.bin"
+          chmod +x ./crave
+          ./crave version || true
+          echo "CRAVE_BIN=$PWD/crave" >> "$GITHUB_ENV"
+
+      - name: Write crave.conf from secrets
+        env:
+          CRAVE_USERNAME: ${{ secrets.CRAVE_USERNAME }}
+          CRAVE_TOKEN: ${{ secrets.CRAVE_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$CRAVE_USERNAME" || { echo "::error::secret CRAVE_USERNAME is not set"; exit 1; }
+          test -n "$CRAVE_TOKEN"    || { echo "::error::secret CRAVE_TOKEN is not set"; exit 1; }
+          python3 - <<'PY' > crave/crave.conf
+          import json, os
+          print(json.dumps({
+              "username": os.environ["CRAVE_USERNAME"],
+              "headers": {"Content-Type": "application/json",
+                          "Authorization": os.environ["CRAVE_TOKEN"],
+                          "User-Agent": "Crave"},
+              "projects": [],
+              "server": "https://foss.crave.io/api",
+          }, indent=2))
+          PY
+          chmod 600 crave/crave.conf
+          echo "crave.conf written for ${CRAVE_USERNAME}"
+
+      - name: Validate the kit
+        run: python3 crave/preflight.py
+
+      - name: List my crave projects
+        if: ${{ inputs.mode == 'list' }}
+        run: |
+          set -euo pipefail
+          echo "=== crave list ==="
+          ./crave -c crave/crave.conf list || true
+          echo
+          echo "=== crave list --json ==="
+          ./crave -c crave/crave.conf list --json > crave-list.json 2>/dev/null || true
+          cat crave-list.json
+
+      - name: Submit the build to crave
+        if: ${{ inputs.mode == 'build' }}
+        env:
+          PROJECT_ID: ${{ inputs.project_id }}
+        run: |
+          set -euo pipefail
+          cd crave
+          ARGS=(--branch "${{ inputs.branch }}" --stage "${{ inputs.stage }}"
+                --crave-bin "$CRAVE_BIN" --workdir "$PWD/work")
+          if [ "${{ inputs.fallback }}" != "none" ]; then
+            ARGS+=(--fallback-branch "${{ inputs.fallback }}")
+          fi
+          if [ -n "${PROJECT_ID:-}" ]; then
+            ARGS+=(--project-id "$PROJECT_ID")
+          fi
+          if [ "${{ inputs.wait }}" = "true" ]; then
+            ARGS+=(--detach --poll-interval 60 --max-wait "${{ inputs.wait_hours }}")
+          else
+            ARGS+=(--detach --poll-interval 60 --max-wait 0.05)
+          fi
+          python3 crave_build.py "${ARGS[@]}" | tee "$GITHUB_WORKSPACE/crave-run.log"
+
+      - name: Upload run reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crave-run-${{ github.run_number }}
+          path: |
+            crave/work/**/*.json
+            crave-list.json
+            crave-run.log
+          if-no-files-found: warn
+          retention-days: 14
