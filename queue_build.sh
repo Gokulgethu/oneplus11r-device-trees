@@ -29,14 +29,23 @@ fi
 
 # Ensure crave CLI binary is available
 if ! command -v crave &>/dev/null; then
-  echo "==> crave binary not found in PATH. Checking local directory..."
+  echo "==> 'crave' binary not found in system PATH. Checking local directory..."
   if [ -f "${SCRIPT_DIR}/crave" ]; then
     CRAVE_BIN="${SCRIPT_DIR}/crave"
   else
-    echo "==> Downloading latest Crave CLI binary..."
-    curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s --
-    chmod +x crave
-    CRAVE_BIN="${SCRIPT_DIR}/crave"
+    echo "==> Attempting to download latest Crave CLI binary via get_crave.sh..."
+    if curl -sL https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s -- 2>/dev/null && [ -f "${SCRIPT_DIR}/crave" ]; then
+      chmod +x "${SCRIPT_DIR}/crave"
+      CRAVE_BIN="${SCRIPT_DIR}/crave"
+    else
+      echo ""
+      echo "==> Notice: Auto-download of 'crave' binary failed or environment has restricted network."
+      echo "    Please install the Crave CLI binary manually or run:"
+      echo "    curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s --"
+      echo "    sudo mv crave /usr/local/bin/"
+      echo ""
+      exit 1
+    fi
   fi
 else
   CRAVE_BIN="crave"
