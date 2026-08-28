@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <!-- Remote Repositories -->
+  <remote name="github" fetch="https://github.com/" />
+  <remote name="gitlab" fetch="https://gitlab.com/" />
+
+  <!-- OnePlus 11R 5G (udon / CPH2487) Device Tree -->
+  <project name="Gokulgethu/oneplus11r-device-trees"
+           path="device/oneplus/udon"
+           remote="github"
+           revision="arena/01a042ed-oneplus11r-device-trees" />
+
+  <!-- Common Chipset Tree (SM8450 / SM8475 Snapdragon 8+ Gen 1) -->
+  <project name="pjgowtham/android_device_oneplus_sm8450-common"
+           path="device/oneplus/sm8450-common"
+           remote="github"
+           revision="lineage-22.1" />
+
+  <!-- Unified Kernel Source for SM8450 / SM8475 -->
+  <project name="LineageOS/android_kernel_oneplus_sm8450"
+           path="kernel/oneplus/sm8450"
+           remote="github"
+           revision="lineage-22.1" />
+
+  <!-- Hardware OPlus HAL Additions -->
+  <project name="LineageOS/android_hardware_oplus"
+           path="hardware/oplus"
+           remote="github"
+           revision="lineage-24.0" />
+
+  <!-- OnePlus 11R Proprietary Vendor Blobs -->
+  <project name="oneplus-11r-udon/vendor_oneplus_udon"
+           path="vendor/oneplus/udon"
+           remote="github"
+           revision="14" />
+
+  <!-- Common Proprietary Vendor Blobs -->
+  <project name="oneplus-11r-udon/vendor_oneplus_sm8450-common"
+           path="vendor/oneplus/sm8450-common"
+           remote="github"
+           revision="staging" />
+</manifest>

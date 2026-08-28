@@ -8,6 +8,16 @@ BUILD_BROKEN_DUP_RULES := true
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
 COMMON_PATH := device/oneplus/sm8475-common
+ifeq ($(wildcard $(COMMON_PATH)/odm.prop),)
+    ifeq ($(wildcard device/oneplus/sm8450-common/odm.prop),)
+        COMMON_PATH := $(DEVICE_PATH)
+    else
+        COMMON_PATH := device/oneplus/sm8450-common
+    endif
+endif
+ifeq ($(COMMON_PATH),)
+    COMMON_PATH := device/oneplus/udon
+endif
 
 # A/B
 AB_OTA_UPDATER := true
@@ -115,7 +125,15 @@ BOARD_KERNEL_PAGESIZE := 4096
 BOARD_KERNEL_SEPARATED_DTBO := true
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 BOARD_RAMDISK_USE_LZ4 := true
-TARGET_KERNEL_SOURCE ?= kernel/oneplus/sm8475
+ifeq ($(wildcard kernel/oneplus/sm8475/Makefile),)
+    ifeq ($(wildcard kernel/oneplus/sm8450/Makefile),)
+        TARGET_KERNEL_SOURCE ?= kernel/oneplus/sm8475
+    else
+        TARGET_KERNEL_SOURCE ?= kernel/oneplus/sm8450
+    endif
+else
+    TARGET_KERNEL_SOURCE ?= kernel/oneplus/sm8475
+endif
 TARGET_KERNEL_CONFIG := vendor/taro-qgki_defconfig
 TARGET_KERNEL_NO_GCC := true
 

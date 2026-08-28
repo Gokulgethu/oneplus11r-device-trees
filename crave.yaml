@@ -1,0 +1,12 @@
+# Crave.io Build Configuration for Evolution X (Android 17) - OnePlus 11R (udon / CPH2487)
+# Keep client devspace persistent across runner sessions
+Evolution-X:
+  ignoreClientHostname: true
+LineageOS 22.1:
+  ignoreClientHostname: true
+LineageOS 21.0:
+  ignoreClientHostname: true
+LOS 22:
+  ignoreClientHostname: true
+AOSP:
+  ignoreClientHostname: true

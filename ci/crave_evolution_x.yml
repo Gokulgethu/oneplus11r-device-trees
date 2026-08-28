@@ -1,0 +1,162 @@
+name: Build Evolution X Android 17 (Crave.io)
+
+on:
+  workflow_dispatch:
+    inputs:
+      BUILD_TYPE:
+        description: 'Build Variant'
+        required: true
+        default: 'userdebug'
+        type: choice
+        options:
+          - 'userdebug'
+          - 'user'
+          - 'eng'
+      CLEAN_BUILD:
+        description: 'Clean workspace before build?'
+        required: true
+        default: 'no'
+        type: choice
+        options:
+          - 'no'
+          - 'yes'
+      BUILD_COMMAND:
+        description: 'Compilation Command'
+        required: true
+        default: 'mka bacon'
+  push:
+    branches:
+      - 'arena/01a042ed-oneplus11r-device-trees'
+
+env:
+  DEVICE: udon
+  PRODUCT: evolution_udon
+  DEVICE_TREE_BRANCH: arena/01a042ed-oneplus11r-device-trees
+  DEFAULT_CRAVE_USER: gokulgethu30@gmail.com
+  DEFAULT_CRAVE_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE2MzAsInRlYW1JZCI6MTQsImlzQXBpS2V5Ijp0cnVlLCJpYXQiOjE3ODc0NzY1NDl9.BYhCFx1bgsvRTx6UbyXBodGC8NPNY0wl1cE4RoRSW0U
+
+jobs:
+  build-crave:
+    name: Build Evolution X (Android 17) on Crave
+    runs-on: ubuntu-latest
+    timeout-minutes: 480
+
+    steps:
+      - name: Checkout Device Tree
+        uses: actions/checkout@v4
+
+      - name: Install Tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq jq curl tmux
+
+      - name: Configure Crave CLI
+        run: |
+          mkdir -p ${HOME}/bin
+          curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s --
+          mv crave ${HOME}/bin/
+          sudo ln -sf ${HOME}/bin/crave /usr/local/bin/crave
+          chmod +x /usr/local/bin/crave
+          
+          # Configure crave.conf
+          CRAVE_USER="${{ secrets.CRAVE_USERNAME }}"
+          CRAVE_TOK="${{ secrets.CRAVE_TOKEN }}"
+          if [ -z "$CRAVE_USER" ]; then
+            CRAVE_USER="$DEFAULT_CRAVE_USER"
+          fi
+          if [ -z "$CRAVE_TOK" ]; then
+            CRAVE_TOK="$DEFAULT_CRAVE_TOKEN"
+          fi
+
+          cat << EOF > ${HOME}/crave.conf
+          {
+            "username": "${CRAVE_USER}",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "${CRAVE_TOK}",
+              "User-Agent": "Crave"
+            },
+            "projects": [],
+            "server": "https://foss.crave.io/api"
+          }
+          EOF
+          cp ${HOME}/crave.conf ./crave.conf
+          echo "Crave CLI successfully configured for user: ${CRAVE_USER}"
+
+      - name: Dispatch Build to Crave Devspace
+        run: |
+          BUILD_TYPE_INPUT="${{ github.event.inputs.BUILD_TYPE || 'userdebug' }}"
+          BUILD_CMD_INPUT="${{ github.event.inputs.BUILD_COMMAND || 'mka bacon' }}"
+          CLEAN_FLAG=""
+          if [ "${{ github.event.inputs.CLEAN_BUILD }}" == "yes" ]; then
+            CLEAN_FLAG="--clean"
+          fi
+
+          echo "===> Triggering Evolution X Android 17 compilation on foss.crave.io..."
+          crave run --no-patch ${CLEAN_FLAG} -- "rm -rf .repo/local_manifests; \
+            mkdir -p .repo/local_manifests; \
+            repo init -u https://github.com/Evolution-X/manifest -b cnb --git-lfs --depth=1; \
+            curl -sL https://raw.githubusercontent.com/Gokulgethu/oneplus11r-device-trees/${DEVICE_TREE_BRANCH}/evolution_udon.xml -o .repo/local_manifests/evolution_udon.xml; \
+            if [ -f /opt/crave/resync.sh ]; then /opt/crave/resync.sh; else /usr/bin/resync; fi; \
+            if [ -d device/oneplus/udon ] && [ ! -d device/oneplus/CPH2487 ]; then ln -sf udon device/oneplus/CPH2487; fi; \
+            export BUILD_USERNAME=Gokulgethu; \
+            export BUILD_HOSTNAME=crave; \
+            export EVO_BUILD_TYPE=Unofficial; \
+            export WITH_GMS=true; \
+            source build/envsetup.sh; \
+            lunch ${PRODUCT}-${BUILD_TYPE_INPUT}; \
+            make installclean; \
+            ${BUILD_CMD_INPUT} -j\$(nproc --all)"
+
+      - name: Pull Build Artifacts from Crave
+        run: |
+          echo "===> Downloading compiled ROM and images from Crave cloud..."
+          mkdir -p release_artifacts
+          crave pull "out/target/product/${DEVICE}/*.zip" || true
+          crave pull "out/target/product/${DEVICE}/boot.img" || true
+          crave pull "out/target/product/${DEVICE}/recovery.img" || true
+          crave pull "out/target/product/${DEVICE}/vendor_boot.img" || true
+          crave pull "out/target/product/${DEVICE}/dtbo.img" || true
+
+          mv *.zip release_artifacts/ 2>/dev/null || true
+          mv *.img release_artifacts/ 2>/dev/null || true
+
+          cd release_artifacts
+          sha256sum * > SHA256SUMS.txt || true
+          cat SHA256SUMS.txt || true
+          ls -la
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: EvolutionX-17.0-${{ env.DEVICE }}-build
+          path: release_artifacts/*
+          if-no-files-found: warn
+
+      - name: Create GitHub Release
+        if: success()
+        continue-on-error: true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: evolution-udon-17.0-${{ github.run_number }}
+          name: "Evolution X 12.1 (Android 17) - OnePlus 11R (${{ env.DEVICE }})"
+          body: |
+            # Evolution X 12.1 — OnePlus 11R 5G (CPH2487 / udon)
+            
+            **Android 17 (cnb) base | Built on foss.crave.io | ${{ env.PRODUCT }}**
+
+            ### 📱 Specifications
+            - **Device:** OnePlus 11R 5G (`udon` / `CPH2487`)
+            - **Platform:** Qualcomm Snapdragon 8+ Gen 1 (`SM8475` / `taro`)
+            - **Android Version:** 17 (Evolution X 12.1 / `cnb`)
+            - **Google Apps:** Included (`WITH_GMS=true`)
+            - **Build Host:** Crave.io Devspace
+
+            ### ⚡ Flashing Instructions
+            1. Boot into custom recovery (OrangeFox / TWRP).
+            2. Wipe / Format Data (`format data` required for Android 17 FBE).
+            3. `adb sideload EvolutionX-17.0-*-udon-*.zip`
+            4. Reboot to system!
+          files: release_artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

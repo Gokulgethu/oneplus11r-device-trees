@@ -22,15 +22,48 @@ This device tree is engineered for **universal compatibility** across all major 
 
 ## 🚀 Supported Custom ROMs & Lunch Commands
 
-| Custom ROM | Lunch Command | Product Makefile |
-|:---|:---|:---|
-| **LineageOS** | `lunch lineage_udon-userdebug` | `lineage_udon.mk` |
-| **crDroid** | `lunch crdroid_udon-userdebug` | `crdroid_udon.mk` |
-| **PixelOS / PixelExperience** | `lunch aosp_udon-userdebug` | `aosp_udon.mk` |
-| **Evolution X** | `lunch evolution_udon-userdebug` | `evolution_udon.mk` |
-| **RisingOS** | `lunch rising_udon-userdebug` | `rising_udon.mk` |
-| **Project Matrixx / DerpFest** | `lunch aosp_udon-userdebug` | `aosp_udon.mk` |
-| **Generic AOSP / AOSP-Krypton** | `lunch aosp_udon-userdebug` | `aosp_udon.mk` |
+| Custom ROM | Lunch Command | Product Makefile | Android Version |
+|:---|:---|:---|:---|
+| **Evolution X** | `lunch evolution_udon-userdebug` | `evolution_udon.mk` | **Android 17 (`cnb`)** |
+| **LineageOS** | `lunch lineage_udon-userdebug` | `lineage_udon.mk` | Android 15 / 16 / 17 |
+| **crDroid** | `lunch crdroid_udon-userdebug` | `crdroid_udon.mk` | Android 15 / 16 |
+| **RisingOS** | `lunch rising_udon-userdebug` | `rising_udon.mk` | Android 16 QPR2 |
+| **PixelOS / PixelExperience** | `lunch aosp_udon-userdebug` | `aosp_udon.mk` | Android 15 / 16 |
+| **Project Matrixx / DerpFest** | `lunch aosp_udon-userdebug` | `aosp_udon.mk` | Android 15 / 16 |
+
+---
+
+## ⚡ Fast Cloud Build on Crave.io (Evolution X Android 17)
+
+To build **Evolution X Android 17 (12.1 `cnb`)** on [Crave.io](https://crave.io) cloud nodes:
+
+### Option A: GitHub Actions (Automated)
+Run the workflow under `.github/workflows/crave_evolution_x.yml` via the **Actions** tab on GitHub. It automatically spins up Crave devspace, syncs repositories, compiles `evolution_udon-userdebug`, and uploads flashable `.zip` and `.img` artifacts!
+
+### Option B: Crave CLI One-Shot Command
+Run directly with the Crave CLI:
+```bash
+./crave_run.sh
+```
+Or execute manually:
+```bash
+crave run --no-patch -- "rm -rf .repo/local_manifests && \
+mkdir -p .repo/local_manifests && \
+repo init -u https://github.com/Evolution-X/manifest -b cnb --git-lfs --depth=1 && \
+curl -sL https://raw.githubusercontent.com/Gokulgethu/oneplus11r-device-trees/arena/01a042ed-oneplus11r-device-trees/evolution_udon.xml -o .repo/local_manifests/evolution_udon.xml && \
+/opt/crave/resync.sh && \
+[ -d device/oneplus/udon ] && [ ! -d device/oneplus/CPH2487 ] && ln -sf udon device/oneplus/CPH2487; \
+export BUILD_USERNAME=Gokulgethu && \
+export BUILD_HOSTNAME=crave && \
+export EVO_BUILD_TYPE=Unofficial && \
+export WITH_GMS=true && \
+source build/envsetup.sh && \
+lunch evolution_udon-userdebug && \
+make installclean && \
+mka bacon -j\$(nproc --all)"
+```
+
+See [CRAVE_BUILD_GUIDE.md](CRAVE_BUILD_GUIDE.md) for complete detailed instructions.
 
 ---
 

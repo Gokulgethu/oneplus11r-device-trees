@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evolution X Android 17 — OnePlus 11R (udon) Crave.io Builder</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo-group">
+          <div class="brand-badge">
+            <span class="icon-evo">🧬</span>
+          </div>
+          <div>
+            <div class="title-row">
+              <h1>Evolution X <span class="version-tag">Android 17 (v12.1 cnb)</span></h1>
+              <span class="status-pill status-ready"><span class="dot"></span> Crave Ready</span>
+            </div>
+            <p class="subtitle">Cloud Build Center for OnePlus 11R 5G (<code>udon</code> / <code>CPH2487</code>) on Crave.io</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="refreshBtn">🔄 Refresh Status</button>
+          <a href="#commandSection" class="btn btn-primary">⚡ Generate Build Command</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Stats Grid -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-icon">📱</span>
+        <div class="stat-info">
+          <div class="stat-label">Target Device</div>
+          <div class="stat-val">OnePlus 11R 5G</div>
+          <div class="stat-sub">Codename: <code>udon</code> / <code>CPH2487</code></div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-icon">⚡</span>
+        <div class="stat-info">
+          <div class="stat-label">Chipset Platform</div>
+          <div class="stat-val">Snapdragon 8+ Gen 1</div>
+          <div class="stat-sub">Platform: <code>SM8475</code> (taro)</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-icon">🤖</span>
+        <div class="stat-info">
+          <div class="stat-label">ROM Version</div>
+          <div class="stat-val">Evolution X 12.1</div>
+          <div class="stat-sub">Base: <strong>Android 17</strong> (<code>cnb</code>)</div>
+        </div>
+      </div>
+
+      <div class="stat-card highlight">
+        <span class="stat-icon">☁️</span>
+        <div class="stat-info">
+          <div class="stat-label">Cloud Builder</div>
+          <div class="stat-val">Crave.io Devspace</div>
+          <div class="stat-sub">Target: <code>evolution_udon-userdebug</code></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <div class="main-layout">
+      <!-- Left Column: Crave Build Configurator -->
+      <div class="col-primary">
+        <!-- Interactive Builder -->
+        <section class="card" id="commandSection">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>🛠️ Crave.io Build Command Generator</h2>
+              <span class="card-badge">Instant Execution</span>
+            </div>
+            <p>Customize build options to generate ready-to-run commands for Crave Devspace CLI or GitHub Actions.</p>
+          </div>
+
+          <div class="config-grid">
+            <div class="form-group">
+              <label for="buildType">Build Variant</label>
+              <select id="buildType" class="input-control">
+                <option value="userdebug" selected>userdebug (Recommended / Rooted Debugging)</option>
+                <option value="user">user (Production / Official Testing)</option>
+                <option value="eng">eng (Engineering / Verbose Debug)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="gappsOption">Google Mobile Services (GApps)</label>
+              <select id="gappsOption" class="input-control">
+                <option value="true" selected>WITH_GMS=true (Included Pixel GApps)</option>
+                <option value="false">WITH_GMS=false (Vanilla AOSP)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="cleanBuild">Clean Build Workspace</label>
+              <select id="cleanBuild" class="input-control">
+                <option value="no" selected>No (Fast incremental with ccache)</option>
+                <option value="yes">Yes (Clean full rebuild)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="cpuJobs">Parallel Compilation Cores</label>
+              <select id="cpuJobs" class="input-control">
+                <option value="$(nproc --all)" selected>$(nproc --all) (All Crave cloud cores)</option>
+                <option value="32">32 Cores</option>
+                <option value="16">16 Cores</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Command Display Tabs -->
+          <div class="tabs-container">
+            <div class="tab-buttons">
+              <button class="tab-btn active" data-tab="craveRunTab">Crave CLI One-Shot (crave run)</button>
+              <button class="tab-btn" data-tab="devspaceTab">Crave Devspace Shell</button>
+              <button class="tab-btn" data-tab="ghTab">GitHub Actions Workflow</button>
+              <button class="tab-btn" data-tab="pullTab">Artifact Download (crave pull)</button>
+            </div>
+
+            <div class="tab-content active" id="craveRunTab">
+              <div class="code-wrapper">
+                <pre><code id="craveRunCode">crave run --no-patch -- "..."</code></pre>
+                <button class="copy-btn" data-target="craveRunCode">📋 Copy Command</button>
+              </div>
+              <p class="tab-note">💡 Run this directly from your terminal where <code>crave</code> CLI is installed.</p>
+            </div>
+
+            <div class="tab-content" id="devspaceTab">
+              <div class="code-wrapper">
+                <pre><code id="devspaceCode">./crave_build.sh</code></pre>
+                <button class="copy-btn" data-target="devspaceCode">📋 Copy Script</button>
+              </div>
+              <p class="tab-note">💡 Run inside an active Crave Devspace terminal container.</p>
+            </div>
+
+            <div class="tab-content" id="ghTab">
+              <div class="code-wrapper">
+                <pre><code id="ghCode">gh workflow run "Build Evolution X Android 17 (Crave.io)" --ref arena/01a042ed-oneplus11r-device-trees</code></pre>
+                <button class="copy-btn" data-target="ghCode">📋 Copy GH CLI</button>
+              </div>
+              <p class="tab-note">💡 Triggers the automated GitHub Actions runner which handles Crave dispatch, artifact pulling, and release publishing.</p>
+            </div>
+
+            <div class="tab-content" id="pullTab">
+              <div class="code-wrapper">
+                <pre><code id="pullCode">crave pull out/target/product/udon/*.zip
+crave pull out/target/product/udon/*.img</code></pre>
+                <button class="copy-btn" data-target="pullCode">📋 Copy Pull Commands</button>
+              </div>
+              <p class="tab-note">💡 Pulls the generated ROM zip, boot, dtbo, vendor_boot, and recovery images from Crave cloud storage.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Live File Viewer -->
+        <section class="card">
+          <div class="card-header">
+            <div class="header-title">
+              <h2>📂 Device Tree & Manifest Inspector</h2>
+              <span class="card-badge" id="activeFileName">evolution_udon.mk</span>
+            </div>
+            <p>Inspect the device tree configurations and Crave build definitions.</p>
+          </div>
+
+          <div class="file-selector-row">
+            <button class="file-chip active" data-file="evolution_udon.mk">evolution_udon.mk</button>
+            <button class="file-chip" data-file="evolution_udon.xml">evolution_udon.xml</button>
+            <button class="file-chip" data-file="BoardConfig.mk">BoardConfig.mk</button>
+            <button class="file-chip" data-file="BoardConfigCommon.mk">BoardConfigCommon.mk</button>
+            <button class="file-chip" data-file="crave.yaml">crave.yaml</button>
+            <button class="file-chip" data-file="crave_build.sh">crave_build.sh</button>
+            <button class="file-chip" data-file=".github/workflows/crave_evolution_x.yml">crave_evolution_x.yml</button>
+          </div>
+
+          <div class="code-wrapper file-viewer-box">
+            <pre><code id="fileContent">Loading configuration file...</code></pre>
+            <button class="copy-btn" data-target="fileContent">📋 Copy File</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Specs & Flashing Guide -->
+      <div class="col-secondary">
+        <!-- Hardware & HAL Matrix -->
+        <section class="card">
+          <div class="card-header">
+            <div class="header-title">
+              <h3>📱 OnePlus 11R Hardware Profile</h3>
+            </div>
+          </div>
+          <div class="specs-table">
+            <div class="spec-row">
+              <span class="spec-name">SoC Chipset</span>
+              <span class="spec-value">Snapdragon 8+ Gen 1 (4nm)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-name">GPU</span>
+              <span class="spec-value">Adreno 730 @ 900MHz</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-name">Display</span>
+              <span class="spec-value">6.74" 1240x2772 120Hz AMOLED</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-name">DPI Density</span>
+              <span class="spec-value">450 DPI (xxxhdpi)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-name">Optical FOD</span>
+              <span class="spec-value">X=445, Y=2200, S=190</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-name">Primary Camera</span>
+              <span class="spec-value">50MP Sony IMX890 OIS</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-name">Charging</span>
+              <span class="spec-value">100W SuperVOOC (dual-cell)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-name">Partitions</span>
+              <span class="spec-value">Dynamic Partitions (A/B)</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Evolution X Android 17 Features -->
+        <section class="card">
+          <div class="card-header">
+            <div class="header-title">
+              <h3>✨ Evolution X 12.1 Features</h3>
+            </div>
+          </div>
+          <ul class="feature-list">
+            <li><span class="tick">✔</span> <strong>Android 17 (cnb)</strong> latest upstream base</li>
+            <li><span class="tick">✔</span> <strong>Full Google Pixel Experience</strong> (Pixel Launcher, Weather, Sounds)</li>
+            <li><span class="tick">✔</span> <strong>The Evolver</strong> customizer (QS styles, Lockscreen clock, Statusbar)</li>
+            <li><span class="tick">✔</span> <strong>Under-Display Fingerprint</strong> custom animations & fast unlock</li>
+            <li><span class="tick">✔</span> <strong>Quick Tap / Columbus gesture</strong> support</li>
+            <li><span class="tick">✔</span> <strong>Face Unlock</strong> & biometric integration</li>
+            <li><span class="tick">✔</span> <strong>Play Integrity Fix</strong> & certification bypass</li>
+          </ul>
+        </section>
+
+        <!-- Flashing Instructions -->
+        <section class="card">
+          <div class="card-header">
+            <div class="header-title">
+              <h3>📲 Flashing Instructions</h3>
+            </div>
+          </div>
+          <ol class="steps-list">
+            <li>
+              <strong>Reboot into Recovery</strong>
+              <code>adb reboot recovery</code>
+            </li>
+            <li>
+              <strong>Format Data (Mandatory)</strong>
+              <p>Navigate to Wipe &gt; Format Data &gt; type <code>yes</code> to initialize Android 17 FBE.</p>
+            </li>
+            <li>
+              <strong>Sideload ROM Package</strong>
+              <code>adb sideload EvolutionX-17.0-*-udon-*.zip</code>
+            </li>
+            <li>
+              <strong>Reboot System</strong>
+              <p>Reboot to system and enjoy Evolution X on Android 17!</p>
+            </li>
+          </ol>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <p>Evolution X 12.1 (Android 17) for OnePlus 11R 5G (<code>udon</code> / <code>CPH2487</code>) | Built using <a href="https://crave.io" target="_blank" rel="noopener">Crave.io Cloud Devspaces</a></p>
+        <p class="repo-ref">Tree branch: <code>arena/01a042ed-oneplus11r-device-trees</code> | Maintained by <strong>Gokulgethu</strong></p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

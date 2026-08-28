@@ -1,0 +1,9 @@
+.repo/
+out/
+out_crave/
+release_artifacts/
+*.zip
+*.img
+*.log
+crave.conf
+token.txt

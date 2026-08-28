@@ -4,16 +4,24 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-DEVICE_PATH := device/oneplus/CPH2487
+# Device Path Detection (supports both device/oneplus/udon and device/oneplus/CPH2487)
+ifeq ($(wildcard device/oneplus/CPH2487/BoardConfig.mk),)
+    DEVICE_PATH := device/oneplus/udon
+else
+    DEVICE_PATH := device/oneplus/CPH2487
+endif
 DEVICE_UDON_PATH := device/oneplus/udon
 BOARD_VENDOR := oneplus
 
-# Build System Lenient Flags for Custom ROMs
+# Build System Lenient Flags for Custom ROMs (Android 14-17 / Soong / Ninja)
 BUILD_BROKEN_DUP_RULES := true
+BUILD_BROKEN_DUP_COPY_HEADERS := true
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+BUILD_BROKEN_PREBUILT_ELF_FILES := true
 BUILD_BROKEN_MISSING_BUILD_MODULES := true
 BUILD_BROKEN_VENDOR_PROPERTY_NAMESPACE := true
 BUILD_BROKEN_INCORRECT_PARTITION_IMAGES := true
+BUILD_BROKEN_VINTF_CHECK := true
 
 # Include the common OEM chipset BoardConfig (Snapdragon 8+ Gen 1 SM8475 / taro)
 -include $(DEVICE_PATH)/BoardConfigCommon.mk
@@ -44,11 +52,12 @@ SOONG_CONFIG_OPLUS_LINEAGE_TOUCH_HAL := INCLUDE_DIR
 SOONG_CONFIG_OPLUS_LINEAGE_TOUCH_HAL_INCLUDE_DIR := $(DEVICE_PATH)/touch/include
 
 # Matrix files
-DEVICE_MATRIX_FILE := $(DEVICE_PATH)/compatibility_matrix.xml
-DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := $(DEVICE_PATH)/framework_compatibility_matrix.xml
+DEVICE_MATRIX_FILE := $(wildcard $(DEVICE_PATH)/compatibility_matrix.xml device/oneplus/udon/compatibility_matrix.xml device/oneplus/CPH2487/compatibility_matrix.xml)
+DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := $(wildcard $(DEVICE_PATH)/framework_compatibility_matrix.xml device/oneplus/udon/framework_compatibility_matrix.xml device/oneplus/CPH2487/framework_compatibility_matrix.xml)
 
 # Inherit proprietary vendor BoardConfigs
 -include vendor/oneplus/CPH2487/BoardConfigVendor.mk
 -include vendor/oneplus/udon/BoardConfigVendor.mk
 -include vendor/oneplus/sm8450-common/BoardConfigVendor.mk
 -include vendor/oneplus/sm8475-common/BoardConfigVendor.mk
+-include $(DEVICE_PATH)/BoardConfigVendor.mk

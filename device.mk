@@ -57,3 +57,4 @@ DEVICE_PACKAGE_OVERLAYS += \
 -include vendor/oneplus/udon/udon-vendor.mk
 -include vendor/oneplus/sm8450-common/sm8450-common-vendor.mk
 -include vendor/oneplus/sm8475-common/sm8475-common-vendor.mk
+-include $(LOCAL_PATH)/CPH2487-vendor.mk
