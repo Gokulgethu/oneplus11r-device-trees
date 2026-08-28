@@ -116,15 +116,8 @@ BOARD_KERNEL_SEPARATED_DTBO := true
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 BOARD_RAMDISK_USE_LZ4 := true
 TARGET_KERNEL_SOURCE ?= kernel/oneplus/sm8475
-TARGET_KERNEL_CONFIG := vendor/taro-yazhu_defconfig
+TARGET_KERNEL_CONFIG := vendor/taro-qgki_defconfig
 TARGET_KERNEL_NO_GCC := true
-
-# Performance optimizations for yazhu kernel
-TARGET_USES_PERF := true
-TARGET_PERF_YAZHU := true
-CPU_ISOLATION := 3-7
-SCHED_MC_PROMOTE := false
-SCHED_SMT_PROMOTE := false
 
 # Kernel modules
 BOARD_VENDOR_KERNEL_MODULES_BLOCKLIST_FILE := $(COMMON_PATH)/modules.blocklist

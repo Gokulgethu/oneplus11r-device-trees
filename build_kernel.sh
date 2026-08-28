@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# OnePlus 11R (udon / aston / CPH2487) Kernel Build Script
+# Yazhu Kernel Build Script for OnePlus 11R 5G (udon / aston / CPH2487)
 #
 
 set -e
@@ -19,7 +19,7 @@ if [ -z "${CLANG_PATH}" ]; then
     fi
 fi
 
-echo "Compiler version: $(clang --version | head -1 2>/dev/null || echo 'Clang in PATH')"
+echo "Compiler version: $(clang --version | head -1)"
 
 echo "--> Configuring kernel (gki_defconfig + waipio/oplus fragments)..."
 make O="${OUT_DIR}" ARCH="${ARCH}" LLVM=1 gki_defconfig
