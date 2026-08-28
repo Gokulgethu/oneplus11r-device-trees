@@ -46,7 +46,7 @@ const server = http.createServer((req, res) => {
       'crave.yaml',
       'crave_build.sh',
       'crave_run.sh',
-      '.github/workflows/crave_evolution_x.yml',
+      'ci/crave_evolution_x.yml',
       'evolution.dependencies',
       'CRAVE_BUILD_GUIDE.md'
     ];
@@ -90,7 +90,7 @@ const server = http.createServer((req, res) => {
         'crave.yaml',
         'crave_build.sh',
         'crave_run.sh',
-        '.github/workflows/crave_evolution_x.yml',
+        'ci/crave_evolution_x.yml',
         'evolution.dependencies'
       ]
     };

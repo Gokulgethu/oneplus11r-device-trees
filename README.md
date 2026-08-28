@@ -38,7 +38,7 @@ This device tree is engineered for **universal compatibility** across all major 
 To build **Evolution X Android 17 (12.1 `cnb`)** on [Crave.io](https://crave.io) cloud nodes:
 
 ### Option A: GitHub Actions (Automated)
-Run the workflow under `.github/workflows/crave_evolution_x.yml` via the **Actions** tab on GitHub. It automatically spins up Crave devspace, syncs repositories, compiles `evolution_udon-userdebug`, and uploads flashable `.zip` and `.img` artifacts!
+Run the workflow under `ci/crave_evolution_x.yml` (or copied to `.github/workflows/`) via the **Actions** tab on GitHub. It automatically spins up Crave devspace, syncs repositories, compiles `evolution_udon-userdebug`, and uploads flashable `.zip` and `.img` artifacts!
 
 ### Option B: Crave CLI One-Shot Command
 Run directly with the Crave CLI:

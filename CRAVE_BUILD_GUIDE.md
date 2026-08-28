@@ -20,7 +20,7 @@ This guide explains how to compile **Evolution X 12.1 (Android 17 - `cnb`)** for
 
 ## ⚡ Method 1: Automatic Build via GitHub Actions (One-Click)
 
-The repository includes a ready-to-use GitHub Actions workflow located at `.github/workflows/crave_evolution_x.yml`.
+The repository includes a ready-to-use GitHub Actions workflow located at `ci/crave_evolution_x.yml` (can be symlinked or placed into `.github/workflows/crave_evolution_x.yml`).
 
 ### Prerequisites
 1. Go to your repository on GitHub: **Settings > Secrets and variables > Actions**.
