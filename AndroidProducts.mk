@@ -10,7 +10,11 @@ PRODUCT_MAKEFILES := \
     $(LOCAL_DIR)/aosp_udon.mk \
     $(LOCAL_DIR)/crdroid_udon.mk \
     $(LOCAL_DIR)/evolution_udon.mk \
-    $(LOCAL_DIR)/rising_udon.mk
+    $(LOCAL_DIR)/rising_udon.mk \
+    $(LOCAL_DIR)/pixelos_udon.mk \
+    $(LOCAL_DIR)/matrixx_udon.mk \
+    $(LOCAL_DIR)/derp_udon.mk \
+    $(LOCAL_DIR)/bliss_udon.mk
 
 COMMON_LUNCH_CHOICES := \
     lineage_udon-user \
@@ -22,4 +26,8 @@ COMMON_LUNCH_CHOICES := \
     aosp_udon-userdebug \
     crdroid_udon-userdebug \
     evolution_udon-userdebug \
-    rising_udon-userdebug
+    rising_udon-userdebug \
+    pixelos_udon-userdebug \
+    matrixx_udon-userdebug \
+    derp_udon-userdebug \
+    bliss_udon-userdebug

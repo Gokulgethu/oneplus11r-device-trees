@@ -1,30 +1,82 @@
 #
-# Copyright (C) 2021-2022 The LineageOS Project
+# Copyright (C) 2023-2026 The LineageOS Project
 #
 # SPDX-License-Identifier: Apache-2.0
 #
 
 BUILD_BROKEN_DUP_RULES := true
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+BUILD_BROKEN_MISSING_BUILD_MODULES := true
+BUILD_BROKEN_VENDOR_PROPERTY_NAMESPACE := true
+BUILD_BROKEN_INCORRECT_PARTITION_IMAGES := true
 
-COMMON_PATH := device/oneplus/sm8475-common
+# Detect active device tree location
+ifneq ($(wildcard $(DEVICE_PATH)/modules.load),)
+    COMMON_PATH := $(DEVICE_PATH)
+else ifneq ($(wildcard device/oneplus/udon/modules.load),)
+    COMMON_PATH := device/oneplus/udon
+else ifneq ($(wildcard device/oneplus/CPH2487/modules.load),)
+    COMMON_PATH := device/oneplus/CPH2487
+else ifneq ($(wildcard device/oneplus/sm8450-common/modules.load),)
+    COMMON_PATH := device/oneplus/sm8450-common
+else ifneq ($(wildcard device/oneplus/sm8475-common/modules.load),)
+    COMMON_PATH := device/oneplus/sm8475-common
+else
+    COMMON_PATH := $(LOCAL_PATH)
+endif
 
 # A/B
 AB_OTA_UPDATER := true
 
 AB_OTA_PARTITIONS += \
+    abl \
+    aop \
+    aop_config \
+    bluetooth \
     boot \
+    cpucp \
+    devcfg \
+    dsp \
     dtbo \
+    engineering_cdt \
+    featenabler \
+    hyp \
+    imagefv \
+    keymaster \
+    modem \
+    my_bigball \
+    my_carrier \
+    my_company \
+    my_engineering \
+    my_heytap \
+    my_manifest \
+    my_preload \
+    my_product \
+    my_region \
+    my_stock \
     odm \
+    odm_dlkm \
+    oplus_sec \
+    oplusstanvbk \
     product \
+    qupfw \
+    recovery \
+    shrm \
+    splash \
     system \
     system_ext \
+    tz \
+    uefi \
+    uefisecapp \
     vbmeta \
     vbmeta_system \
     vbmeta_vendor \
     vendor \
     vendor_boot \
-    vendor_dlkm
+    vendor_dlkm \
+    xbl \
+    xbl_config \
+    xbl_ramdump
 
 # ANT+
 BOARD_ANT_WIRELESS_DEVICE := "qualcomm-hidl"
@@ -70,25 +122,24 @@ TARGET_USES_OPLUS_CAMERA := true
 TARGET_GRALLOC_HANDLE_HAS_RESERVED_SIZE := true
 
 # Properties
-TARGET_ODM_PROP += $(COMMON_PATH)/odm.prop
-TARGET_PRODUCT_PROP += $(COMMON_PATH)/product.prop
-TARGET_SYSTEM_EXT_PROP += $(COMMON_PATH)/system_ext.prop
-TARGET_VENDOR_PROP += $(COMMON_PATH)/vendor.prop
+TARGET_ODM_PROP += $(wildcard $(COMMON_PATH)/odm.prop)
+TARGET_PRODUCT_PROP += $(wildcard $(COMMON_PATH)/product.prop)
+TARGET_SYSTEM_EXT_PROP += $(wildcard $(COMMON_PATH)/system_ext.prop)
+TARGET_VENDOR_PROP += $(wildcard $(COMMON_PATH)/vendor.prop)
 
 # Filesystem
-TARGET_FS_CONFIG_GEN := $(COMMON_PATH)/config.fs
+TARGET_FS_CONFIG_GEN := $(wildcard $(COMMON_PATH)/config.fs)
 
 # Fingerprint
 TARGET_SURFACEFLINGER_UDFPS_LIB := //$(COMMON_PATH):libudfps_extension.oplus_taro
 
 # HIDL
 DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := \
-    $(COMMON_PATH)/device_framework_matrix.xml \
-    hardware/qcom-caf/common/vendor_framework_compatibility_matrix.xml \
-    vendor/aosp/config/device_framework_matrix.xml
-DEVICE_MATRIX_FILE := $(COMMON_PATH)/compatibility_matrix.xml
-DEVICE_MANIFEST_FILE := $(COMMON_PATH)/manifest.xml
-ODM_MANIFEST_FILES := $(COMMON_PATH)/manifest_odm.xml
+    $(wildcard $(COMMON_PATH)/device_framework_matrix.xml) \
+    $(wildcard $(COMMON_PATH)/framework_compatibility_matrix.xml)
+DEVICE_MATRIX_FILE := $(wildcard $(COMMON_PATH)/compatibility_matrix.xml)
+DEVICE_MANIFEST_FILE := $(wildcard $(COMMON_PATH)/manifest.xml)
+ODM_MANIFEST_FILES := $(wildcard $(COMMON_PATH)/manifest_odm.xml)
 
 # Init
 TARGET_INIT_VENDOR_LIB := //$(COMMON_PATH):libinit_oplus_taro
@@ -119,11 +170,11 @@ TARGET_KERNEL_SOURCE ?= kernel/oneplus/sm8475
 TARGET_KERNEL_CONFIG := vendor/taro-qgki_defconfig
 TARGET_KERNEL_NO_GCC := true
 
-# Kernel modules
-BOARD_VENDOR_KERNEL_MODULES_BLOCKLIST_FILE := $(COMMON_PATH)/modules.blocklist
-BOARD_VENDOR_KERNEL_MODULES_LOAD := $(strip $(shell cat $(COMMON_PATH)/modules.load))
-BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := $(strip $(shell cat $(COMMON_PATH)/modules.load.recovery))
-BOOT_KERNEL_MODULES := $(strip $(shell cat $(COMMON_PATH)/modules.include.recovery))
+# Kernel modules (Safe wildcards preventing missing file errors)
+BOARD_VENDOR_KERNEL_MODULES_BLOCKLIST_FILE := $(wildcard $(COMMON_PATH)/modules.blocklist)
+BOARD_VENDOR_KERNEL_MODULES_LOAD := $(if $(wildcard $(COMMON_PATH)/modules.load),$(strip $(shell cat $(COMMON_PATH)/modules.load)),)
+BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := $(if $(wildcard $(COMMON_PATH)/modules.load.recovery),$(strip $(shell cat $(COMMON_PATH)/modules.load.recovery)),)
+BOOT_KERNEL_MODULES := $(if $(wildcard $(COMMON_PATH)/modules.include.recovery),$(strip $(shell cat $(COMMON_PATH)/modules.include.recovery)),)
 TARGET_MODULE_ALIASES += wlan.ko:qca_cld3_wlan.ko
 
 # Platform
@@ -161,16 +212,16 @@ TARGET_TAP_TO_WAKE_NODE := "/proc/touchpanel/double_tap_enable"
 # Recovery
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true
-TARGET_RECOVERY_FSTAB := $(COMMON_PATH)/init/fstab.default
+TARGET_RECOVERY_FSTAB := $(wildcard $(COMMON_PATH)/init/fstab.default $(COMMON_PATH)/init/fstab.qcom)
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
 
 # RIL
-CUSTOM_APNS_FILE := $(COMMON_PATH)/configs/apns/apns-conf.xml
+CUSTOM_APNS_FILE := $(wildcard $(COMMON_PATH)/configs/apns/apns-conf.xml)
 ENABLE_VENDOR_RIL_SERVICE := true
 
-# Security
+# Security Patch Levels (Stock OxygenOS 16.0.5.1002 EX01)
 BOOT_SECURITY_PATCH := 2026-07-01
 VENDOR_SECURITY_PATCH := $(BOOT_SECURITY_PATCH)
 
@@ -225,6 +276,8 @@ WIFI_HIDL_FEATURE_DUAL_INTERFACE := true
 WIFI_HIDL_UNIFIED_SUPPLICANT_SERVICE_RC_ENTRY := true
 WPA_SUPPLICANT_VERSION := VER_0_8_X
 
-# Include the proprietary files BoardConfig.
+# Include proprietary files BoardConfig
 -include vendor/oneplus/sm8475-common/BoardConfigVendor.mk
 -include vendor/oneplus/sm8450-common/BoardConfigVendor.mk
+-include vendor/oneplus/CPH2487/BoardConfigVendor.mk
+-include vendor/oneplus/udon/BoardConfigVendor.mk
